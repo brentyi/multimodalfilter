@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--preview", action="store_true")
     parser.add_argument("--visualize_observations", action="store_true")
     parser.add_argument(
-        "--traj_count", type=int, default=10, help="Number of trajectories to run."
+        "--traj_count", type=int, default=1, help="Number of trajectories to run."
     )
 
     args = parser.parse_args()
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         reward_shaping=True,
         control_freq=20,
         controller="position",
-        camera_depth=True
+        camera_depth=True,
     )
 
     # IK controller: we only use this IK, not control
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     trajectories_file = fannypack.utils.TrajectoriesFile(target_path, read_only=False)
 
-    for rollout_index in range(100):
+    while len(trajectories_file) < args.traj_count:
         obs = env.reset()
         if preview_mode:
             env.render()
@@ -112,13 +112,13 @@ if __name__ == "__main__":
                 break
 
             if not args.preview:
-                image = np.mean(obs['image'], axis=2) / 127.5 - 1.
+                image = np.mean(obs["image"], axis=2) / 127.5 - 1.0
                 # image = image[20:20+32,20:20+32]
-                obs['image'] = image
+                obs["image"] = image
                 # obs['depth'] = obs['depth'][20:20+32,20:20+32]
 
                 if vis_images:
-                    plt.imshow(image, cmap='gray')
+                    plt.imshow(image, cmap="gray")
                     plt.gca().invert_yaxis()
                     plt.draw()
                     plt.pause(0.0001)
@@ -135,7 +135,10 @@ if __name__ == "__main__":
 
         if i == max_iteration_count - 1:
             termination_cause = "max iteration"
-        print("Terminated rollout #{}: {}".format(rollout_index, termination_cause))
+        print(f"Terminated rollout #{len(trajectories_file)}: {termination_cause}")
 
-        with trajectories_file:
-            trajectories_file.complete_trajectory()
+        if termination_cause == "max iteration" and not args.preview:
+            with trajectories_file:
+                trajectories_file.complete_trajectory()
+        else:
+            trajectories_file.abandon_trajectory()

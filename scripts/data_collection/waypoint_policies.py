@@ -60,7 +60,7 @@ class AbstractWaypointPolicy(abc.ABC):
         # Ready to start doing stuff -- let's sample a waypoint
         self.target_pos = self._sample_waypoint()
         self.delta_scale = np.exp(np.random.uniform(0.0, np.log(100)))
-        print("Delta scale:", self.delta_scale)
+        # print("Delta scale:", self.delta_scale)
 
         self.counter = 0
         self.counter_threshold = np.random.uniform(100, 250)
@@ -125,13 +125,13 @@ class PushWaypointPolicy(AbstractWaypointPolicy):
     def _sample_waypoint(self):
         # Ready to start doing stuff -- let's sample a waypoint
         if self.push_state == self.PushStates.NEED_RETRACT:
-            print("Retracting")
+            # print("Retracting")
             waypoint = np.random.uniform(
                 [0.14, -0.3, 1.544], [self.push_x, 0, 1.546 + 0.15],
             )
             self.push_state = self.PushStates.RETRACTED
         elif self.push_state == self.PushStates.RETRACTED:
-            print("Pushing")
+            # print("Pushing")
             waypoint = np.random.uniform(
                 [self.push_x, -0.3, 1.544], [0.67, 0.19, 1.546 + 0.15],
             )
