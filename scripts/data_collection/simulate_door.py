@@ -137,7 +137,9 @@ if __name__ == "__main__":
             termination_cause = "max iteration"
         print(f"Terminated rollout #{len(trajectories_file)}: {termination_cause}")
 
-        if termination_cause == "max iteration" and not args.preview:
+        # Data is usually garbage if we terminated because of a persistent joint limits
+        # error
+        if termination_cause != "joint limits" and not args.preview:
             with trajectories_file:
                 trajectories_file.complete_trajectory()
         else:
