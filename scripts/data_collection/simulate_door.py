@@ -17,6 +17,9 @@ if __name__ == "__main__":
     parser.add_argument("--policy", choices=["push", "pull"], required=True)
     parser.add_argument("--preview", action="store_true")
     parser.add_argument("--visualize_observations", action="store_true")
+    parser.add_argument(
+        "--traj_count", type=int, default=10, help="Number of trajectories to run."
+    )
 
     args = parser.parse_args()
 
@@ -37,12 +40,13 @@ if __name__ == "__main__":
         ignore_done=True,
         use_camera_obs=(not preview_mode),
         camera_name="birdview",
-        camera_height=32,
-        camera_width=32,
+        camera_height=64,
+        camera_width=64,
         gripper_visualization=True,
         reward_shaping=True,
         control_freq=20,
         controller="position",
+        camera_depth=True
     )
 
     # IK controller: we only use this IK, not control
@@ -107,11 +111,17 @@ if __name__ == "__main__":
             if q_limit_counter > 400.0:
                 break
 
-            if vis_images:
-                start = time.time()
-                plt.imshow(obs["image"], cmap="gray")
-                plt.draw()
-                plt.pause(0.0001)
+            if not args.preview:
+                image = np.mean(obs['image'], axis=2) / 127.5 - 1.
+                # image = image[20:20+32,20:20+32]
+                obs['image'] = image
+                # obs['depth'] = obs['depth'][20:20+32,20:20+32]
+
+                if vis_images:
+                    plt.imshow(image, cmap='gray')
+                    plt.gca().invert_yaxis()
+                    plt.draw()
+                    plt.pause(0.0001)
 
             if type(policy) == waypoint_policies.PushWaypointPolicy:
                 if (
@@ -121,7 +131,6 @@ if __name__ == "__main__":
                     termination_cause = "closed door"
                     break
 
-            assert "image" not in obs or obs["image"].dtype == np.uint8
             trajectories_file.add_timestep(obs)
 
         if i == max_iteration_count - 1:
