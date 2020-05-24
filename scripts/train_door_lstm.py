@@ -1,6 +1,7 @@
 """
 """
-
+import crossmodal
+import diffbayes
 import fannypack
 
 dataset_urls = {
@@ -14,11 +15,16 @@ dataset_urls = {
     "panda_door_push_500.hdf5": "https://drive.google.com/open?id=1TgMp0RIjzxdw6zrRMzGC5tutxYqQ_Tze",
 }
 
-# dataset_file = "door_pull_10.hdf5"
-for dataset_file in dataset_urls.keys():
-    dataset_path = fannypack.data.cached_drive_file(
-        dataset_file, dataset_urls[dataset_file]
-    )
+dataset_file = "panda_door_pull_10.hdf5"
+dataset_path = (
+    fannypack.data.cached_drive_file(dataset_file, dataset_urls[dataset_file])
+    for dataset_file in ("panda_door_pull_10.hdf5",)
+)
+trajectories = crossmodal.door_data.load_trajectories(*dataset_path)
+states = trajectories[0][1]
+print(states.keys())
 
-print(dataset_path)
-trajectories = fannypack.data.TrajectoriesFile(dataset_path)
+diffbayes.datasets.SubsequenceDataset(trajectories, 20)
+# with fannypack.data.TrajectoriesFile(dataset_path) as traj_file:
+#     print(traj_file[0].keys())
+#     print(traj_file[0]["image"][0].shape)
