@@ -1,30 +1,32 @@
-"""
-"""
+import numpy as np
+import torch.utils.data
+
 import crossmodal
 import diffbayes
 import fannypack
 
-dataset_urls = {
-    "panda_door_pull_10.hdf5": "https://drive.google.com/open?id=1sO3avSEtegDcgISHdALDMW59b-knRRvf",
-    "panda_door_pull_100.hdf5": "https://drive.google.com/open?id=1HCDnimAhCDP8OGZimWMRlq8MkrRzOcgf",
-    "panda_door_pull_300.hdf5": "https://drive.google.com/open?id=1YSvBR7-JAnH88HRVFAZwiJNY_osLm8aH",
-    "panda_door_pull_500.hdf5": "https://drive.google.com/open?id=1dE_jw3-JyX2JagFnCwrfjex4-mwvlEC-",
-    "panda_door_push_10.hdf5": "https://drive.google.com/open?id=1nZsQE6FtQwyLkfUQL4CPEc01LjYa_QFy",
-    "panda_door_push_100.hdf5": "https://drive.google.com/open?id=1JEDGZWpWE-Z9kuCvRBJh_Auhc-2V0UpN",
-    "panda_door_push_300.hdf5": "https://drive.google.com/open?id=18AnusvGEWYA52MHHciq5rHwHJmlx-Ldm",
-    "panda_door_push_500.hdf5": "https://drive.google.com/open?id=1TgMp0RIjzxdw6zrRMzGC5tutxYqQ_Tze",
-}
+# Create model, Buddy
+filter_model = crossmodal.door_models.DoorLSTMFilter()
+buddy = fannypack.utils.Buddy("lstm-test1", filter_model)
 
-dataset_file = "panda_door_pull_10.hdf5"
-dataset_path = (
-    fannypack.data.cached_drive_file(dataset_file, dataset_urls[dataset_file])
-    for dataset_file in ("panda_door_pull_10.hdf5",)
-)
-trajectories = crossmodal.door_data.load_trajectories(*dataset_path)
-states = trajectories[0][1]
-print(states.keys())
 
-diffbayes.datasets.SubsequenceDataset(trajectories, 20)
-# with fannypack.data.TrajectoriesFile(dataset_path) as traj_file:
-#     print(traj_file[0].keys())
-#     print(traj_file[0]["image"][0].shape)
+def train(*, subsequence_length, batch_size, epochs):
+    trajectories = crossmodal.door_data.load_trajectories("panda_door_pull_10.hdf5")
+    dataloader = torch.utils.data.DataLoader(
+        diffbayes.data.SubsequenceDataset(
+            trajectories=trajectories, subsequence_length=subsequence_length
+        ),
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=8,
+    )
+
+    for _ in range(epochs):
+        diffbayes.train.train_filter(
+            buddy, filter_model, dataloader, initial_covariance=torch.eye(3)
+        )
+
+
+train(subsequence_length=3, batch_size=32, epochs=5)
+train(subsequence_length=10, batch_size=32, epochs=5)
+train(subsequence_length=20, batch_size=32, epochs=5)

@@ -1,45 +1,81 @@
+import sys
+from typing import List
+
 import numpy as np
 import torch
 from tqdm.auto import tqdm
 
-from fannypack import utils
+import diffbayes
+import fannypack
+
+dataset_urls = {
+    "panda_door_pull_10.hdf5": "https://drive.google.com/open?id=1sO3avSEtegDcgISHdALDMW59b-knRRvf",
+    "panda_door_pull_100.hdf5": "https://drive.google.com/open?id=1HCDnimAhCDP8OGZimWMRlq8MkrRzOcgf",
+    "panda_door_pull_300.hdf5": "https://drive.google.com/open?id=1YSvBR7-JAnH88HRVFAZwiJNY_osLm8aH",
+    "panda_door_pull_500.hdf5": "https://drive.google.com/open?id=1dE_jw3-JyX2JagFnCwrfjex4-mwvlEC-",
+    "panda_door_push_10.hdf5": "https://drive.google.com/open?id=1nZsQE6FtQwyLkfUQL4CPEc01LjYa_QFy",
+    "panda_door_push_100.hdf5": "https://drive.google.com/open?id=1JEDGZWpWE-Z9kuCvRBJh_Auhc-2V0UpN",
+    "panda_door_push_300.hdf5": "https://drive.google.com/open?id=18AnusvGEWYA52MHHciq5rHwHJmlx-Ldm",
+    "panda_door_push_500.hdf5": "https://drive.google.com/open?id=1TgMp0RIjzxdw6zrRMzGC5tutxYqQ_Tze",
+}
 
 
 def load_trajectories(
-    *paths,
-    use_vision=True,
-    vision_interval=10,
-    use_proprioception=True,
-    use_haptics=True,
-    use_mass=False,
-    use_depth=False,
-    image_blackout_ratio=0,
-    sequential_image_rate=1,
-    start_timestep=0,
-    **unused,
-):
-    """
-    Loads a list of trajectories from a set of input paths, where each
-    trajectory is a tuple containing...
+    *input_files,
+    use_vision: bool = True,
+    vision_interval: int = 10,
+    use_proprioception: bool = True,
+    use_haptics: bool = True,
+    use_depth: bool = False,
+    image_blackout_ratio: float = 0.0,
+    sequential_image_rate: int = 1,
+    start_timestep: int = 0,
+) -> List[diffbayes.types.TrajectoryTupleNumpy]:
+    """Loads a list of trajectories from a set of input files, where each trajectory is
+    a tuple containing...
         states: an (T, state_dim) array of state vectors
         observations: a key->(T, *) dict of observations
         controls: an (T, control_dim) array of control vectors
 
-    Each path can either be a string or a (string, int) tuple, where int
-    indicates the maximum number of trajectories to import.
+    Each input can either be a string or a (string, int) tuple, where int indicates the
+    maximum number of trajectories to import.
+
+
+    Args:
+        *input_files: Trajectory inputs. Should be members of
+            `crossmodal.door_data.dataset_urls.keys()`.
+
+    Keyword Args:
+        use_vision (bool, optional): Set to False to zero out camera inputs.
+        vision_interval (int, optional): # of times each camera image is duplicated. For
+            emulating a slow image rate.
+        use_proprioception (bool, optional): Set to False to zero out kinematics data.
+        use_haptics (bool, optional): Set to False to zero out F/T sensors.
+        use_depth (bool, optional): Set to False to zero out depth inputs.
+        image_blackout_ratio (float, optional): Dropout probabiliity for camera inputs.
+            0.0 = no dropout, 1.0 = all images dropped out.
+        sequential_image_rate (int, optional): If value is `N`, we only send 1 image
+            frame ever `N` timesteps. All others are zeroed out.
+        start_timestep (int, optional): If value is `N`, we skip the first `N` timesteps
+            of each trajectory.
+
+    Returns:
+        List[diffbayes.types.TrajectoryTupleNumpy]: list of trajectories.
     """
     trajectories = []
 
     assert 1 > image_blackout_ratio >= 0
     assert image_blackout_ratio == 0 or sequential_image_rate == 1
 
-    for path in paths:
-        count = np.float("inf")
-        if type(path) == tuple:
-            path, count = path
-            assert type(count) == int
+    for name in input_files:
+        max_trajectory_count = sys.maxsize
+        if type(name) == tuple:
+            name, max_trajectory_count = name
+        assert type(max_trajectory_count) == int
 
-        with utils.TrajectoriesFile(path) as f:
+        with fannypack.utils.TrajectoriesFile(
+            fannypack.data.cached_drive_file(name, dataset_urls[name])
+        ) as f:
             # Keys:
             # [
             #     "contact-obs",
@@ -62,7 +98,7 @@ def load_trajectories(
 
             # Iterate over each trajectory
             for i, trajectory in tqdm(enumerate(f)):
-                if i >= count:
+                if i >= max_trajectory_count:
                     break
 
                 timesteps = len(trajectory["object-state"])
@@ -99,7 +135,7 @@ def load_trajectories(
                 )
                 assert observations["gripper_sensors"].shape[1] == 7
 
-                # If disabled, zero out proprioception or haptics
+                # Zero out proprioception or haptics if unused
                 if not use_proprioception:
                     observations["gripper_pos"][:] = 0
                 if not use_haptics:
@@ -217,7 +253,7 @@ def load_trajectories(
                 trajectories.append(
                     (
                         states[start_timestep:],
-                        utils.SliceWrapper(observations)[start_timestep:],
+                        fannypack.utils.SliceWrapper(observations)[start_timestep:],
                         controls[start_timestep:],
                     )
                 )
@@ -237,11 +273,15 @@ def _print_normalization(trajectories):
     for t in trajectories:
         states.extend(t[0])
         if observations is None:
-            observations = utils.SliceWrapper(t[1]).map(lambda x: [x])
+            observations = fannypack.utils.SliceWrapper(t[1]).map(
+                lambda nparray_value: [nparray_value]
+            )
         else:
             observations.append(t[1])
         controls.extend(t[2])
-    observations = observations.map(lambda x: np.concatenate(x, axis=0)).data
+    observations = observations.map(
+        lambda list_value: np.concatenate(list_value, axis=0)
+    ).data
     print(observations["gripper_sensors"].shape)
 
     def print_ranges(**kwargs):
