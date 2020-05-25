@@ -273,15 +273,17 @@ def _print_normalization(trajectories):
     for t in trajectories:
         states.extend(t[0])
         if observations is None:
-            observations = fannypack.utils.SliceWrapper(t[1]).map(
-                lambda nparray_value: [nparray_value]
+            observations = fannypack.utils.SliceWrapper(
+                fannypack.utils.SliceWrapper(t[1]).map(
+                    lambda nparray_value: [nparray_value]
+                )
             )
         else:
             observations.append(t[1])
         controls.extend(t[2])
     observations = observations.map(
         lambda list_value: np.concatenate(list_value, axis=0)
-    ).data
+    )
     print(observations["gripper_sensors"].shape)
 
     def print_ranges(**kwargs):
