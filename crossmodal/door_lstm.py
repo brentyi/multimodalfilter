@@ -1,3 +1,5 @@
+from typing import cast
+
 import torch
 import torch.nn as nn
 
@@ -87,6 +89,8 @@ class DoorLSTMFilter(diffbayes.base.Filter):
     ) -> types.StatesTorch:
         """LSTM "looped" forward pass.
         """
+        observations = cast(types.TorchDict, observations)
+
         # Observations: key->value
         # where shape of value is (batch, seq_len, *)
         batch_size = observations["image"].shape[0]

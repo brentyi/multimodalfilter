@@ -6,7 +6,7 @@ import diffbayes
 import fannypack
 
 # Create model, Buddy
-filter_model = crossmodal.door_models.DoorLSTMFilter()
+filter_model = crossmodal.door_lstm.DoorLSTMFilter()
 buddy = fannypack.utils.Buddy("lstm-test1", filter_model)
 
 
