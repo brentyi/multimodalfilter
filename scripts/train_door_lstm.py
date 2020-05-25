@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 import torch.utils.data
 
 import crossmodal
@@ -18,7 +19,7 @@ def train(*, subsequence_length, batch_size, epochs):
         ),
         batch_size=batch_size,
         shuffle=True,
-        num_workers=8,
+        num_workers=8
     )
 
     for _ in range(epochs):

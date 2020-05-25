@@ -25,14 +25,14 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         """Initializes a dynamics model for our door task.
         """
 
-        Q = torch.diag([0.05, 0.05, 0.05])
+        Q = torch.diag(torch.FloatTensor([0.05, 0.05, 0.05]))
         super().__init__(state_dim=3, Q=Q)
 
         control_dim = 7
 
         # Build neural network
         self.state_layers = nn.Sequential(
-            nn.Linear(state_dim, units),
+            nn.Linear(self.state_dim, units),
             resblocks.Linear(units),
             resblocks.Linear(units),
         )
@@ -46,7 +46,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
             resblocks.Linear(units),
             resblocks.Linear(units),
             resblocks.Linear(units),
-            nn.Linear(units, state_dim + 1),
+            nn.Linear(units, self.state_dim + 1),
         )
         self.units = units
 
@@ -70,7 +70,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         assert state_features.shape == (N, self.units)
 
         # (N, units)
-        merged_features = torch.cat((control_features, state_features), dim=-1)
+        merged_features = torch.cat((control_features, state_features), dim=1)
         assert merged_features.shape == (N, self.units * 2)
 
         # (N, units * 2) => (N, state_dim + 1)

@@ -97,7 +97,7 @@ def load_trajectories(
             # ]
 
             # Iterate over each trajectory
-            for i, trajectory in tqdm(enumerate(f)):
+            for i, trajectory in enumerate(tqdm(f)):
                 if i >= max_trajectory_count:
                     break
 

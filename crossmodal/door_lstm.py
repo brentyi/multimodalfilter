@@ -60,9 +60,7 @@ class DoorLSTMFilter(diffbayes.base.Filter):
         )
 
         # LSTM layers
-        self.lstm = nn.LSTM(
-            units, self.lstm_hidden_dim, self.lstm_num_layers, batch_first=True
-        )
+        self.lstm = nn.LSTM(units, self.lstm_hidden_dim, self.lstm_num_layers)
 
         # Define the output layer
         self.output_layers = nn.Sequential(
@@ -92,20 +90,17 @@ class DoorLSTMFilter(diffbayes.base.Filter):
         observations = cast(types.TorchDict, observations)
 
         # Observations: key->value
-        # where shape of value is (batch, seq_len, *)
-        batch_size = observations["image"].shape[0]
-        sequence_length = observations["image"].shape[1]
-        assert observations["image"].shape[0] == batch_size
-        assert observations["gripper_pos"].shape[0] == batch_size
-        assert observations["gripper_pos"].shape[1] == sequence_length
-        assert observations["gripper_sensors"].shape[1] == sequence_length
+        # where shape of value is (seq_len, batch, *)
+        T, N = observations["image"].shape[:2]
+        assert observations["gripper_pos"].shape[:2] == (T, N)
+        assert observations["gripper_sensors"].shape[:2] == (T, N)
 
         # Forward pass through observation encoders
         reshaped_images = observations["image"].reshape(
-            batch_size * sequence_length, 1, self.image_rows, self.image_cols
+            T * N, 1, self.image_rows, self.image_cols
         )
         image_features = self.observation_image_layers(reshaped_images).reshape(
-            (batch_size, sequence_length, self.units)
+            (T, N, self.units)
         )
 
         merged_features = torch.cat(
@@ -118,16 +113,16 @@ class DoorLSTMFilter(diffbayes.base.Filter):
             dim=-1,
         )
 
-        assert merged_features.shape == (batch_size, sequence_length, self.units * 4)
+        assert merged_features.shape == (T, N, self.units * 4)
 
         fused_features = self.fusion_layers(merged_features)
-        assert fused_features.shape == (batch_size, sequence_length, self.units)
+        assert fused_features.shape == (T, N, self.units)
 
         # Forward pass through LSTM layer + save the hidden state
         lstm_out, self.lstm_hidden = self.lstm(fused_features, self.lstm_hidden)
-        assert lstm_out.shape == (batch_size, sequence_length, self.lstm_hidden_dim)
+        assert lstm_out.shape == (T, N, self.lstm_hidden_dim)
 
         predicted_states = self.output_layers(lstm_out)
-        assert predicted_states.shape == (batch_size, sequence_length, self.state_dim)
+        assert predicted_states.shape == (T, N, self.state_dim)
 
         return predicted_states
