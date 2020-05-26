@@ -78,8 +78,8 @@ class DoorLSTMFilter(diffbayes.base.Filter):
         N = len(mean)
         device = next(self.parameters()).device
         self.lstm_hidden = (
-            torch.zeros(self.lstm_num_layers, N, self.lstm_hidden_dim),
-            torch.zeros(self.lstm_num_layers, N, self.lstm_hidden_dim),
+            torch.zeros(self.lstm_num_layers, N, self.lstm_hidden_dim, device=device),
+            torch.zeros(self.lstm_num_layers, N, self.lstm_hidden_dim, device=device),
         )
 
     def forward_loop(

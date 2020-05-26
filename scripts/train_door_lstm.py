@@ -6,6 +6,9 @@ import crossmodal
 import diffbayes
 import fannypack
 
+# Move cache in case we're running on an NFS
+fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
+
 # Open PDB before quitting
 fannypack.utils.pdb_safety_net()
 
@@ -31,8 +34,12 @@ def train(*, subsequence_length, batch_size, epochs):
 
     for _ in range(epochs):
         diffbayes.train.train_filter(
-            buddy, filter_model, dataloader, initial_covariance=torch.eye(3)
+            buddy,
+            filter_model,
+            dataloader,
+            initial_covariance=torch.eye(3, device=buddy.device),
         )
+
 
 # Run training curriculum
 train(subsequence_length=2, batch_size=32, epochs=2)
