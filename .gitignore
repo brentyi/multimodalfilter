@@ -9,3 +9,4 @@ htmlcov
 checkpoints/
 logs/
 metadata/
+*.cache/
