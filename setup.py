@@ -12,5 +12,5 @@ setup(
     install_requires=[
         "fannypack",
         "diffbayes @ https://github.com/brentyi/diffbayes/tarball/master",
-    ]
+    ],
 )
