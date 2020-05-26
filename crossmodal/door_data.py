@@ -268,18 +268,11 @@ def _print_normalization(trajectories):
     """ Helper for producing code to normalize inputs
     """
     states = []
-    observations = None
+    observations = fannypack.utils.SliceWrapper({})
     controls = []
     for t in trajectories:
         states.extend(t[0])
-        if observations is None:
-            observations = fannypack.utils.SliceWrapper(
-                fannypack.utils.SliceWrapper(t[1]).map(
-                    lambda nparray_value: [nparray_value]
-                )
-            )
-        else:
-            observations.append(t[1])
+        observations.append(t[1])
         controls.extend(t[2])
     observations = observations.map(
         lambda list_value: np.concatenate(list_value, axis=0)

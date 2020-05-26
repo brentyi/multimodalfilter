@@ -13,10 +13,8 @@ parser.add_argument("--experiment_name", type=str)
 parser.add_argument("--freeze_dynamics", action="store_true")
 args = parser.parse_args()
 
-# Move cache in case we're running on an NFS
+# Move cache in case we're running on NFS (eg Juno), open PDB on quit
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
-
-# Open PDB before quitting
 fannypack.utils.pdb_safety_net()
 
 # Load training data
@@ -27,6 +25,7 @@ trajectories = crossmodal.door_data.load_trajectories(
 # Create model, Buddy
 filter_model = crossmodal.door_particle_filter.DoorParticleFilter()
 buddy = fannypack.utils.Buddy(args.experiment_name, filter_model)
+buddy.set_metadata({"model_type": "particle_filter", "dataset_args": {}})
 
 # Training helpers
 def train_dynamics_single_step(*, epochs):

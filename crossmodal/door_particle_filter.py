@@ -57,8 +57,6 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         controls: types.ControlsTorch,
         noisy: bool,
     ) -> types.StatesTorch:
-        """Dynamics forward pass for our door task.
-        """
         N, state_dim = initial_states.shape
         assert state_dim == self.state_dim
 
@@ -137,8 +135,6 @@ class DoorMeasurementModel(diffbayes.base.ParticleFilterMeasurementModel):
     def forward(
         self, *, states: types.StatesTorch, observations: types.ObservationsTorch
     ) -> types.StatesTorch:
-        """Measurement forward pass for our door task.
-        """
         assert type(observations) == dict
         assert len(states.shape) == 3  # (N, M, state_dim)
         assert states.shape[2] == self.state_dim

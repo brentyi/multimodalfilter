@@ -6,10 +6,8 @@ import crossmodal
 import diffbayes
 import fannypack
 
-# Move cache in case we're running on an NFS
+# Move cache in case we're running on NFS (eg Juno), open PDB on quit
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
-
-# Open PDB before quitting
 fannypack.utils.pdb_safety_net()
 
 # Load training data
@@ -20,6 +18,7 @@ trajectories = crossmodal.door_data.load_trajectories(
 # Create model, Buddy
 filter_model = crossmodal.door_lstm.DoorLSTMFilter()
 buddy = fannypack.utils.Buddy("lstm-test1", filter_model)
+buddy.set_metadata({"model_type": "lstm", "dataset_args": {}})
 
 # Training helper
 def train(*, subsequence_length, batch_size, epochs):

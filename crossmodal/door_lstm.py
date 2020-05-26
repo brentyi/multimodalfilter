@@ -72,9 +72,6 @@ class DoorLSTMFilter(diffbayes.base.Filter):
     def initialize_beliefs(
         self, *, mean: types.StatesTorch, covariance: torch.Tensor
     ) -> None:
-        """Initialize filter beliefs. This doesn't make sense for our LSTM estimator, so
-        we do nothing. :)
-        """
         N = len(mean)
         device = next(self.parameters()).device
         self.lstm_hidden = (
@@ -85,8 +82,6 @@ class DoorLSTMFilter(diffbayes.base.Filter):
     def forward_loop(
         self, *, observations: types.ObservationsTorch, controls: types.ControlsTorch
     ) -> types.StatesTorch:
-        """LSTM "looped" forward pass.
-        """
         observations = cast(types.TorchDict, observations)
 
         # Observations: key->value
