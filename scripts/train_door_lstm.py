@@ -1,10 +1,12 @@
-import numpy as np
-import torch
-import torch.utils.data
+import argparse
 
 import crossmodal
-import diffbayes
 import fannypack
+
+# Parse args
+parser = argparse.ArgumentParser()
+parser.add_argument("--experiment_name", type=str, required=True)
+args = parser.parse_args()
 
 # Move cache in case we're running on NFS (eg Juno), open PDB on quit
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
@@ -17,32 +19,27 @@ trajectories = crossmodal.door_data.load_trajectories(
 
 # Create model, Buddy
 filter_model = crossmodal.door_lstm.DoorLSTMFilter()
-buddy = fannypack.utils.Buddy("lstm-test1", filter_model)
+buddy = fannypack.utils.Buddy(args.experiment_name, filter_model)
 buddy.set_metadata({"model_type": "lstm", "dataset_args": {}})
 
-# Training helper
-def train(*, subsequence_length, batch_size, epochs):
-    dataloader = torch.utils.data.DataLoader(
-        diffbayes.data.SubsequenceDataset(
-            trajectories=trajectories, subsequence_length=subsequence_length
-        ),
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=8,
-    )
-
-    for _ in range(epochs):
-        diffbayes.train.train_filter(
-            buddy,
-            filter_model,
-            dataloader,
-            initial_covariance=torch.eye(3, device=buddy.device),
-        )
-
+# Configure training helpers
+train = crossmodal.door_train
+train.configure(buddy=buddy, filter_model=filter_model, trajectories=trajectories)
 
 # Run training curriculum
-train(subsequence_length=2, batch_size=32, epochs=2)
+train.train_e2e(subsequence_length=2, batch_size=32, epochs=2)
 buddy.save_checkpoint("phase0")
 
-train(subsequence_length=16, batch_size=32, epochs=20)
+train.train_e2e(subsequence_length=16, batch_size=32, epochs=20)
 buddy.save_checkpoint("phase1")
+
+# Load eval trajectories using experiment metadata
+eval_trajectories = crossmodal.door_data.load_trajectories(
+    "panda_door_pull_10.hdf5",
+    "panda_door_push_10.hdf5",
+    **(buddy.metadata["dataset_args"])
+)
+
+# Run eval
+filter_model.resample = True
+crossmodal.door_eval.eval_model(filter_model, eval_trajectories)

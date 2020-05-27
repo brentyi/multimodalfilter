@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
 import torch
@@ -6,21 +6,20 @@ import torch
 import diffbayes
 import fannypack
 
-from . import door_data
 
-
-def eval_model(filter_model: diffbayes.base.Filter, dataset_args: Dict):
+def eval_model(
+    filter_model: diffbayes.base.Filter,
+    trajectories: List[diffbayes.types.TrajectoryTupleNumpy],
+):
     """Evaluate a filter and print out metrics.
 
     Args:
         filter_model (diffbayes.base.Filter): Filter to evaluate.
-        dataset_args (dict): Dataset arguments, for loading validationg trajectories.
+        trajectories (list): List of trajectories to evaluate on; typically outputted
+            from `crossmodal.door_data.eval_trajectories()`.
     """
     assert isinstance(filter_model, diffbayes.base.Filter)
-    assert type(dataset_args) == dict
-    trajectories = door_data.load_trajectories(
-        "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args,
-    )
+    assert type(trajectories) == list
 
     # Convert list of trajectories -> batch
     #

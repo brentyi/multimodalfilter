@@ -15,6 +15,7 @@ args = parser.parse_args()
 
 # Create and validate Buddy
 buddy = fannypack.utils.Buddy(args.experiment_name)
+buddy.load_metadata()
 assert "model_type" in buddy.metadata
 assert "dataset_args" in buddy.metadata
 
@@ -26,5 +27,12 @@ filter_model: diffbayes.base.Filter = {
 buddy.attach_model(filter_model)
 buddy.load_checkpoint()
 
+# Load trajectories using experiment metadata
+trajectories = crossmodal.door_data.load_trajectories(
+    "panda_door_pull_10.hdf5",
+    "panda_door_push_10.hdf5",
+    **buddy.metadata["dataset_args"],
+)
+
 # Run eval
-crossmodal.door_eval.eval_model(filter_model, buddy.metadata["dataset_args"])
+crossmodal.door_eval.eval_model(filter_model, trajectories)

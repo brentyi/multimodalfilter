@@ -75,7 +75,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         output_features = self.shared_layers(merged_features)
         assert output_features.shape == (N, state_dim + 1)
 
-        # We separately compute a direction for our network and a "gate"
+        # We separately compute a direction for our network and a scalar "gate"
         # These are multiplied to produce our final state output
         state_update_direction = output_features[:, :state_dim]
         state_update_gate = torch.sigmoid(output_features[:, -1:])
@@ -114,12 +114,20 @@ class DoorMeasurementModel(diffbayes.base.ParticleFilterMeasurementModel):
             resblocks.Linear(units),
         )
         self.observation_pos_layers = nn.Sequential(
-            nn.Linear(obs_pos_dim, units), resblocks.Linear(units),
+            nn.Linear(obs_pos_dim, units),
+            nn.ReLU(inplace=True),
+            resblocks.Linear(units),
         )
         self.observation_sensors_layers = nn.Sequential(
-            nn.Linear(obs_sensors_dim, units), resblocks.Linear(units),
+            nn.Linear(obs_sensors_dim, units),
+            nn.ReLU(inplace=True),
+            resblocks.Linear(units),
         )
-        self.state_layers = nn.Sequential(nn.Linear(self.state_dim, units))
+        self.state_layers = nn.Sequential(
+            nn.Linear(self.state_dim, units),
+            nn.ReLU(inplace=True),
+            resblocks.Linear(units),
+        )
 
         self.shared_layers = nn.Sequential(
             nn.Linear(units * 4, units),

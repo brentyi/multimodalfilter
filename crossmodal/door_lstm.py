@@ -9,7 +9,7 @@ from fannypack.nn import resblocks
 
 
 class DoorLSTMFilter(diffbayes.base.Filter):
-    def __init__(self, units=32):
+    def __init__(self, units=64):
         """Initializes an LSTM architecture for our door task.
         """
         super().__init__(state_dim=3)
@@ -30,9 +30,9 @@ class DoorLSTMFilter(diffbayes.base.Filter):
             resblocks.Conv2d(channels=32, kernel_size=3),
             nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=16, out_channels=4, kernel_size=3, padding=1),
-            nn.Flatten(),  # 32 * 32 * 4
-            nn.Linear(4 * 32 * 32, units),
+            nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3, padding=1),
+            nn.Flatten(),  # 32 * 32 * 8
+            nn.Linear(8 * 32 * 32, units),
             nn.ReLU(inplace=True),
             resblocks.Linear(units),
         )
