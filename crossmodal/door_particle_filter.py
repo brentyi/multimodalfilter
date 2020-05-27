@@ -9,16 +9,21 @@ from fannypack.nn import resblocks
 
 
 class DoorParticleFilter(diffbayes.base.ParticleFilter):
-    def __init__(self, num_particles=100):
+    def __init__(self):
         """Initializes a particle filter for our door task.
         """
 
         super().__init__(
             dynamics_model=DoorDynamicsModel(),
             measurement_model=DoorMeasurementModel(),
-            num_particles=num_particles,
+            num_particles=30,
         )
 
+    def train(self, mode: bool = True):
+        """Adjust particle count based on train vs eval mode.
+        """
+        self.num_particles = 30 if mode else 300
+        super().train(mode)
 
 class DoorDynamicsModel(diffbayes.base.DynamicsModel):
     def __init__(self, units=64):
