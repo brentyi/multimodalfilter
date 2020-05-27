@@ -25,7 +25,7 @@ fannypack.utils.pdb_safety_net()
 
 # Load training data
 trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_300.hdf5", "panda_door_push_300.hdf5"
+    "panda_door_pull_300.hdf5", "panda_door_push_300.hdf5", **dataset_args
 )
 
 # Create model, Buddy

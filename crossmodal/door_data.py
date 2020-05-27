@@ -31,7 +31,7 @@ def add_dataset_arguments(parser: argparse.ArgumentParser):
     parser.add_argument("--no_proprioception", action="store_true")
     parser.add_argument("--no_haptics", action="store_true")
     parser.add_argument("--image_blackout_ratio", type=float, default=0.0)
-    parser.add_argument("--sequential_image_rate", type=float, default=1.0)
+    parser.add_argument("--sequential_image_rate", type=int, default=1)
 
 
 def get_dataset_args(args: argparse.Namespace):
@@ -46,7 +46,7 @@ def get_dataset_args(args: argparse.Namespace):
         "use_proprioception": not args.no_proprioception,
         "use_haptics": not args.no_haptics,
         "image_blackout_ratio": args.image_blackout_ratio,
-        "sequential_image_rate": args.image_blackout_ratio,
+        "sequential_image_rate": args.sequential_image_rate,
     }
     return dataset_args
 
@@ -159,9 +159,8 @@ def load_trajectories(
 
             observations["image"] = raw_trajectory["image"]
             assert observations["image"].shape == (timesteps, 32, 32)
-            # We can only enable either blackout rate or sequential rate
-            assert not (image_blackout_ratio > 0 and sequential_image_rate != 0)
 
+            # Mask image observations based on dataset args
             image_mask: np.ndarray
             if not use_vision:
                 # Use the zero mask
@@ -172,7 +171,7 @@ def load_trajectories(
                 image_mask[::sequential_image_rate, 0, 0] = 1.0
             else:
                 # Apply blackout rate
-                image_mask *= (
+                image_mask = (
                     (np.random.uniform(size=(timesteps,)) > image_blackout_ratio)
                     .astype(np.float32)
                     .reshape((timesteps, 1, 1))
