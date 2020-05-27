@@ -74,10 +74,11 @@ def eval_model(
 
     # Compute & update errors
     true_states = states[1:]
+    start_truncation = 30
     mse = np.mean(
-        fannypack.utils.to_numpy(predicted_states - true_states).reshape(
-            (-1, state_dim)
-        )
+        fannypack.utils.to_numpy(
+            predicted_states[start_truncation:] - true_states[start_truncation:]
+        ).reshape((-1, state_dim))
         ** 2,
         axis=0,
     )

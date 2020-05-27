@@ -30,7 +30,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         """Initializes a dynamics model for our door task.
         """
 
-        Q = torch.diag(torch.FloatTensor([0.05, 0.05, 0.05]))
+        Q = torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
         super().__init__(state_dim=3, Q=Q)
 
         control_dim = 7
