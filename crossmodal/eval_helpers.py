@@ -16,7 +16,7 @@ def eval_filter(
     Args:
         filter_model (diffbayes.base.Filter): Filter to evaluate.
         trajectories (list): List of trajectories to evaluate on; typically outputted
-            from `crossmodal.door_data.eval_trajectories()`.
+            from `crossmodal.door_data.load_trajectories()`.
     """
     assert isinstance(filter_model, diffbayes.base.Filter)
     assert type(trajectories) == list
