@@ -102,190 +102,181 @@ def load_trajectories(
             name, max_trajectory_count = name
         assert type(max_trajectory_count) == int
 
-        with fannypack.utils.TrajectoriesFile(
+        # Load trajectories file into memory, all at once
+        with fannypack.data.TrajectoriesFile(
             fannypack.data.cached_drive_file(name, dataset_urls[name])
         ) as f:
-            # Keys:
-            # [
-            #     "contact-obs",
-            #     "depth",
-            #     "ee-force-obs",
-            #     "ee-torque-obs",
-            #     "eef_pos",
-            #     "eef_quat",
-            #     "eef_vang",
-            #     "eef_vlin",
-            #     "gripper_qpos",
-            #     "gripper_qvel",
-            #     "image",
-            #     "joint_pos",
-            #     "joint_vel",
-            #     "object-state",
-            #     "prev-act",
-            #     "robot-state",
-            # ]
+            raw_trajectories = list(f)
 
-            # Iterate over each trajectory
-            for i, trajectory in enumerate(tqdm(f)):
-                if i >= max_trajectory_count:
-                    break
+        # Iterate over each trajectory
+        for raw_trajectory_index, raw_trajectory in enumerate(raw_trajectories):
+            if raw_trajectory_index >= max_trajectory_count:
+                break
 
-                timesteps = len(trajectory["object-state"])
+            timesteps = len(raw_trajectory["object-state"])
 
-                # The object-state key is stored as:
-                # (contact, door theta, door velocity, hinge x, hinge y)
-                #
-                # We want:
-                # (door theta, hinge x, hinge y)
-                state_dim = 3
-                states = np.full((timesteps, state_dim), np.nan)
+            # The object-state key is stored as:
+            # (contact, door theta, door velocity, hinge x, hinge y)
+            #
+            # We want:
+            # (door theta, hinge x, hinge y)
+            state_dim = 3
+            states = np.full((timesteps, state_dim), np.nan)
 
-                states[:, 0] = trajectory["object-state"][:, 1]  # theta
-                states[:, 1] = trajectory["object-state"][:, 3]  # theta
-                states[:, 2] = trajectory["object-state"][:, 4]  # theta
+            states[:, 0] = raw_trajectory["object-state"][:, 1]  # theta
+            states[:, 1] = raw_trajectory["object-state"][:, 3]  # theta
+            states[:, 2] = raw_trajectory["object-state"][:, 4]  # theta
 
-                # Pull out observations
-                ## This is currently consisted of:
-                ## > gripper_pos: end effector position
-                ## > gripper_sensors: F/T, contact sensors
-                ## > image: camera image
+            # Pull out observations
+            ## This is currently consisted of:
+            ## > gripper_pos: end effector position
+            ## > gripper_sensors: F/T, contact sensors
+            ## > image: camera image
 
-                observations = {}
-                observations["gripper_pos"] = trajectory["eef_pos"]
-                assert observations["gripper_pos"].shape == (timesteps, 3)
+            observations = {}
+            observations["gripper_pos"] = raw_trajectory["eef_pos"]
+            assert observations["gripper_pos"].shape == (timesteps, 3)
 
-                observations["gripper_sensors"] = np.concatenate(
-                    (
-                        trajectory["ee-force-obs"],
-                        trajectory["ee-torque-obs"],
-                        trajectory["contact-obs"][:, np.newaxis],
-                    ),
-                    axis=1,
+            observations["gripper_sensors"] = np.concatenate(
+                (
+                    raw_trajectory["ee-force-obs"],
+                    raw_trajectory["ee-torque-obs"],
+                    raw_trajectory["contact-obs"][:, np.newaxis],
+                ),
+                axis=1,
+            )
+            assert observations["gripper_sensors"].shape[1] == 7
+
+            # Zero out proprioception or haptics if unused
+            if not use_proprioception:
+                observations["gripper_pos"][:] = 0
+            if not use_haptics:
+                observations["gripper_sensors"][:] = 0
+
+            # Resize images, depth
+            raw_trajectory["image"] = raw_trajectory["image"][:, ::2, ::2]
+            # raw_trajectory["depth"] = raw_trajectory["depth"][:, ::2, ::2]
+
+            observations["image"] = raw_trajectory["image"]
+            assert observations["image"].shape == (timesteps, 32, 32)
+            # We can only enable either blackout rate or sequential rate
+            assert not (image_blackout_ratio > 0 and sequential_image_rate != 0)
+
+            image_mask: np.ndarray
+            if not use_vision:
+                # Use the zero mask
+                image_mask = np.zeros((timesteps, 1, 1), dtype=np.float32)
+            elif image_blackout_ratio == 0.0:
+                # Apply sequential rate
+                image_mask = np.zeros((timesteps, 1, 1), dtype=np.float32)
+                image_mask[::sequential_image_rate, 0, 0] = 1.0
+            else:
+                # Apply blackout rate
+                image_mask *= (
+                    (np.random.uniform(size=(timesteps,)) > image_blackout_ratio)
+                    .astype(np.float32)
+                    .reshape((timesteps, 1, 1))
                 )
-                assert observations["gripper_sensors"].shape[1] == 7
+            observations["image"] *= image_mask
 
-                # Zero out proprioception or haptics if unused
-                if not use_proprioception:
-                    observations["gripper_pos"][:] = 0
-                if not use_haptics:
-                    observations["gripper_sensors"][:] = 0
+            # observations["depth"] = np.zeros_like(raw_trajectory["depth"])
+            # if use_depth:
+            #     for i in range(len(observations["depth"])):
+            #         index = (i // vision_interval) * vision_interval
+            #         index = min(index, len(observations["depth"]))
+            #         observations["depth"][i] = raw_trajectory["depth"][index]
 
-                # Resize images, depth
-                trajectory["image"] = trajectory["image"][:, ::2, ::2]
-                # trajectory["depth"] = trajectory["depth"][:, ::2, ::2]
+            # Pull out controls
+            ## This is currently consisted of:
+            ## > previous end effector position
+            ## > end effector position delta
+            ## > binary contact reading
+            eef_positions = raw_trajectory["eef_pos"]
+            eef_positions_shifted = np.roll(eef_positions, shift=-1)
+            eef_positions_shifted[-1] = eef_positions[-1]
+            controls = np.concatenate(
+                [
+                    eef_positions_shifted,
+                    eef_positions - eef_positions_shifted,
+                    raw_trajectory["contact-obs"][:, np.newaxis],
+                ],
+                axis=1,
+            )
+            assert controls.shape == (timesteps, 7)
 
-                assert trajectory["image"].shape[1:] == (32, 32)
-                observations["image"] = np.zeros_like(trajectory["image"])
-                if use_vision:
-                    for i in range(len(observations["image"])):
-                        index = (i // vision_interval) * vision_interval
-                        index = min(index, len(observations["image"]))
-                        blackout_chance = np.random.uniform()
-                        # if blackout chance > ratio, then fill image
-                        # otherwise zero
-                        if image_blackout_ratio == 0 and i % sequential_image_rate == 0:
-                            observations["image"][i] = trajectory["image"][index]
-
-                        if (
-                            blackout_chance > image_blackout_ratio
-                            and sequential_image_rate == 1
-                        ):
-                            observations["image"][i] = trajectory["image"][index]
-
-                # observations["depth"] = np.zeros_like(trajectory["depth"])
-                # if use_depth:
-                #     for i in range(len(observations["depth"])):
-                #         index = (i // vision_interval) * vision_interval
-                #         index = min(index, len(observations["depth"]))
-                #         observations["depth"][i] = trajectory["depth"][index]
-
-                # Pull out controls
-                ## This is currently consisted of:
-                ## > previous end effector position
-                ## > end effector position delta
-                ## > binary contact reading
-                eef_positions = trajectory["eef_pos"]
-                eef_positions_shifted = np.roll(eef_positions, shift=-1)
-                eef_positions_shifted[-1] = eef_positions[-1]
-                controls = np.concatenate(
+            # Normalize data
+            observations["gripper_pos"] -= np.array(
+                [[0.37334135, -0.10821614, 1.5769919]]
+            )
+            observations["gripper_pos"] /= np.array(
+                [[0.13496609, 0.14862472, 0.04533212]]
+            )
+            observations["gripper_sensors"] -= np.array(
+                [
                     [
-                        eef_positions_shifted,
-                        eef_positions - eef_positions_shifted,
-                        trajectory["contact-obs"][:, np.newaxis],
-                    ],
-                    axis=1,
-                )
-                assert controls.shape == (timesteps, 7)
-
-                # Normalize data
-                observations["gripper_pos"] -= np.array(
-                    [[0.37334135, -0.10821614, 1.5769919]]
-                )
-                observations["gripper_pos"] /= np.array(
-                    [[0.13496609, 0.14862472, 0.04533212]]
-                )
-                observations["gripper_sensors"] -= np.array(
-                    [
-                        [
-                            11.064128,
-                            -1.7103539,
-                            28.303621,
-                            0.06923943,
-                            1.661722,
-                            -0.14174654,
-                            0.63155425,
-                        ]
+                        11.064128,
+                        -1.7103539,
+                        28.303621,
+                        0.06923943,
+                        1.661722,
+                        -0.14174654,
+                        0.63155425,
                     ]
-                )
-                observations["gripper_sensors"] /= np.array(
+                ]
+            )
+            observations["gripper_sensors"] /= np.array(
+                [
                     [
-                        [
-                            36.36674,
-                            18.355747,
-                            58.651367,
-                            1.8596123,
-                            4.574878,
-                            0.64844555,
-                            0.48232532,
-                        ]
+                        36.36674,
+                        18.355747,
+                        58.651367,
+                        1.8596123,
+                        4.574878,
+                        0.64844555,
+                        0.48232532,
                     ]
-                )
-                states -= np.array([[0.64900873, -0.00079839, -0.00069189]])
-                states /= np.array([[0.39479038, 0.05650279, 0.0565098]])
-                controls -= np.array(
+                ]
+            )
+            states -= np.array([[0.64900873, -0.00079839, -0.00069189]])
+            states /= np.array([[0.39479038, 0.05650279, 0.0565098]])
+            controls -= np.array(
+                [
                     [
-                        [
-                            -0.1074974,
-                            1.5747472,
-                            0.374877,
-                            0.48083794,
-                            -1.6832547,
-                            1.2024931,
-                            0.63155425,
-                        ]
+                        -0.1074974,
+                        1.5747472,
+                        0.374877,
+                        0.48083794,
+                        -1.6832547,
+                        1.2024931,
+                        0.63155425,
                     ]
-                )
-                controls /= np.array(
+                ]
+            )
+            controls /= np.array(
+                [
                     [
-                        [
-                            0.15000738,
-                            0.07635409,
-                            0.14191878,
-                            0.15354143,
-                            0.1670589,
-                            0.1371131,
-                            0.48232532,
-                        ]
+                        0.15000738,
+                        0.07635409,
+                        0.14191878,
+                        0.15354143,
+                        0.1670589,
+                        0.1371131,
+                        0.48232532,
                     ]
-                )
+                ]
+            )
 
-                trajectories.append(
-                    (
-                        states[start_timestep:],
-                        fannypack.utils.SliceWrapper(observations)[start_timestep:],
-                        controls[start_timestep:],
-                    )
+            trajectories.append(
+                (
+                    states[start_timestep:],
+                    fannypack.utils.SliceWrapper(observations)[start_timestep:],
+                    controls[start_timestep:],
                 )
+            )
+
+            # Reduce memory usage
+            raw_trajectories[raw_trajectory_index] = None
+            del raw_trajectory
 
     ## Uncomment this line to generate the lines required to normalize data
     # _print_normalization(trajectories)
@@ -321,3 +312,26 @@ def _print_normalization(trajectories):
         states=states,
         controls=controls,
     )
+
+
+### Reference
+#
+# Valid trajectory keys:
+# [
+#     "contact-obs",
+#     "depth",
+#     "ee-force-obs",
+#     "ee-torque-obs",
+#     "eef_pos",
+#     "eef_quat",
+#     "eef_vang",
+#     "eef_vlin",
+#     "gripper_qpos",
+#     "gripper_qvel",
+#     "image",
+#     "joint_pos",
+#     "joint_vel",
+#     "object-state",
+#     "prev-act",
+#     "robot-state",
+# ]
