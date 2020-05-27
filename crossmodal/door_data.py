@@ -22,6 +22,7 @@ dataset_urls = {
 
 def load_trajectories(
     *input_files,
+    *,
     use_vision: bool = True,
     vision_interval: int = 10,
     use_proprioception: bool = True,

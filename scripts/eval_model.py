@@ -15,7 +15,6 @@ args = parser.parse_args()
 
 # Create and validate Buddy
 buddy = fannypack.utils.Buddy(args.experiment_name)
-buddy.load_metadata()
 assert "model_type" in buddy.metadata
 assert "dataset_args" in buddy.metadata
 

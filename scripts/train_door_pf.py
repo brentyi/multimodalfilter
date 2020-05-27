@@ -34,7 +34,7 @@ train.train_dynamics_recurrent(subsequence_length=10, epochs=5)
 train.train_dynamics_recurrent(subsequence_length=20, epochs=5)
 buddy.save_checkpoint("phase1")
 
-train.train_measurement(epochs=5)
+train.train_pf_measurement(epochs=3, batch_size=64)
 buddy.save_checkpoint("phase2")
 
 # Freeze dynamics
