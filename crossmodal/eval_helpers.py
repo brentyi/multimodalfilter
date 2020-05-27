@@ -7,7 +7,7 @@ import diffbayes
 import fannypack
 
 
-def eval_model(
+def eval_filter(
     filter_model: diffbayes.base.Filter,
     trajectories: List[diffbayes.types.TrajectoryTupleNumpy],
 ):

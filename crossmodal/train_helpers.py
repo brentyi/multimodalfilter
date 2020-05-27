@@ -6,7 +6,7 @@ import torch.utils.data
 import diffbayes
 import fannypack
 
-# These need to externally set before running
+# These need to externally set before training
 buddy: fannypack.utils.Buddy = None
 filter_model: diffbayes.base.Filter = None
 trajectories: List[diffbayes.types.TrajectoryTupleNumpy] = None

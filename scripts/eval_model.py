@@ -35,4 +35,4 @@ trajectories = crossmodal.door_data.load_trajectories(
 
 # Run eval
 filter_model.eval()
-crossmodal.door_eval.eval_model(filter_model, trajectories)
+crossmodal.eval_helpers.eval_filter(filter_model, trajectories)
