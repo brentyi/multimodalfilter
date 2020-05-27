@@ -30,8 +30,9 @@ buddy.load_checkpoint()
 trajectories = crossmodal.door_data.load_trajectories(
     "panda_door_pull_10.hdf5",
     "panda_door_push_10.hdf5",
-    **buddy.metadata["dataset_args"],
+    **(buddy.metadata["dataset_args"])
 )
 
 # Run eval
+filter_model.eval()
 crossmodal.door_eval.eval_model(filter_model, trajectories)

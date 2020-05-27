@@ -20,6 +20,7 @@ def eval_model(
     """
     assert isinstance(filter_model, diffbayes.base.Filter)
     assert type(trajectories) == list
+    assert not filter_model.training, "Model needs to be in eval mode!"
 
     # Convert list of trajectories -> batch
     #

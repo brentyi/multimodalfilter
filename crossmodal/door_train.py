@@ -28,7 +28,7 @@ def configure(
 
 
 # Training helpers
-def train_dynamics_single_step(*, epochs, batch_size=32):
+def train_pf_dynamics_single_step(*, epochs, batch_size=32):
     assert isinstance(filter_model, diffbayes.base.ParticleFilter)
 
     dataloader = torch.utils.data.DataLoader(
@@ -43,7 +43,7 @@ def train_dynamics_single_step(*, epochs, batch_size=32):
         )
 
 
-def train_dynamics_recurrent(*, subsequence_length, epochs, batch_size=32):
+def train_pf_dynamics_recurrent(*, subsequence_length, epochs, batch_size=32):
     assert isinstance(filter_model, diffbayes.base.ParticleFilter)
 
     dataloader = torch.utils.data.DataLoader(

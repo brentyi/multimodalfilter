@@ -1,3 +1,4 @@
+import argparse
 import sys
 from typing import List
 
@@ -20,14 +21,42 @@ dataset_urls = {
 }
 
 
+def add_dataset_arguments(parser: argparse.ArgumentParser):
+    """Add dataset options to an argument parser.
+
+    Args:
+        parser (argparse.ArgumentParser): Parser to add arguments to.
+    """
+    parser.add_argument("--no_vision", action="store_true")
+    parser.add_argument("--no_proprioception", action="store_true")
+    parser.add_argument("--no_haptics", action="store_true")
+    parser.add_argument("--image_blackout_ratio", type=float, default=0.0)
+    parser.add_argument("--sequential_image_rate", type=float, default=1.0)
+
+
+def get_dataset_args(args: argparse.Namespace):
+    """Get a dataset_args dictionary from a parsed set of arguments, for use in
+    `load_trajectories()`.
+
+    Args:
+        args (argparse.Namespace): Parsed arguments.
+    """
+    dataset_args = {
+        "use_vision": not args.no_vision,
+        "use_proprioception": not args.no_proprioception,
+        "use_haptics": not args.no_haptics,
+        "image_blackout_ratio": args.image_blackout_ratio,
+        "sequential_image_rate": args.image_blackout_ratio,
+    }
+    return dataset_args
+
+
 def load_trajectories(
     *input_files,
-    *,
     use_vision: bool = True,
-    vision_interval: int = 10,
     use_proprioception: bool = True,
     use_haptics: bool = True,
-    use_depth: bool = False,
+    vision_interval: int = 10,
     image_blackout_ratio: float = 0.0,
     sequential_image_rate: int = 1,
     start_timestep: int = 0,
@@ -52,7 +81,6 @@ def load_trajectories(
             emulating a slow image rate.
         use_proprioception (bool, optional): Set to False to zero out kinematics data.
         use_haptics (bool, optional): Set to False to zero out F/T sensors.
-        use_depth (bool, optional): Set to False to zero out depth inputs.
         image_blackout_ratio (float, optional): Dropout probabiliity for camera inputs.
             0.0 = no dropout, 1.0 = all images dropped out.
         sequential_image_rate (int, optional): If value is `N`, we only send 1 image
@@ -144,7 +172,7 @@ def load_trajectories(
 
                 # Resize images, depth
                 trajectory["image"] = trajectory["image"][:, ::2, ::2]
-                trajectory["depth"] = trajectory["depth"][:, ::2, ::2]
+                # trajectory["depth"] = trajectory["depth"][:, ::2, ::2]
 
                 assert trajectory["image"].shape[1:] == (32, 32)
                 observations["image"] = np.zeros_like(trajectory["image"])
@@ -164,12 +192,12 @@ def load_trajectories(
                         ):
                             observations["image"][i] = trajectory["image"][index]
 
-                observations["depth"] = np.zeros_like(trajectory["depth"])
-                if use_depth:
-                    for i in range(len(observations["depth"])):
-                        index = (i // vision_interval) * vision_interval
-                        index = min(index, len(observations["depth"]))
-                        observations["depth"][i] = trajectory["depth"][index]
+                # observations["depth"] = np.zeros_like(trajectory["depth"])
+                # if use_depth:
+                #     for i in range(len(observations["depth"])):
+                #         index = (i // vision_interval) * vision_interval
+                #         index = min(index, len(observations["depth"]))
+                #         observations["depth"][i] = trajectory["depth"][index]
 
                 # Pull out controls
                 ## This is currently consisted of:
