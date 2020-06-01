@@ -19,10 +19,9 @@ assert "model_type" in buddy.metadata
 assert "dataset_args" in buddy.metadata
 
 # Load model using experiment metadata
-filter_model: diffbayes.base.Filter = {
-    "lstm": crossmodal.door_lstm.DoorLSTMFilter,
-    "particle_filter": crossmodal.door_particle_filter.DoorParticleFilter,
-}[buddy.metadata["model_type"]]()
+filter_model: diffbayes.base.Filter = crossmodal.door_models.model_types[
+    buddy.metadata["model_type"]
+]()
 buddy.attach_model(filter_model)
 buddy.load_checkpoint()
 

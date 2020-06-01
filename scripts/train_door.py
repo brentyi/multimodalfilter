@@ -4,10 +4,7 @@ import crossmodal
 import fannypack
 
 # Index of trainable models
-model_types = {
-    "lstm": crossmodal.door_lstm.DoorLSTMFilter,
-    "particle_filter": crossmodal.door_particle_filter.DoorParticleFilter,
-}
+model_types = crossmodal.door_models.model_types
 
 # Parse args
 parser = argparse.ArgumentParser()
