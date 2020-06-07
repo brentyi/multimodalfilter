@@ -7,16 +7,15 @@ import diffbayes
 import diffbayes.types as types
 from fannypack.nn import resblocks
 
+from . import layers
+
 
 class DoorLSTMFilter(diffbayes.base.Filter):
-    def __init__(self, units=64):
+    def __init__(self, units: int=64):
         """Initializes an LSTM architecture for our door task.
         """
         super().__init__(state_dim=3)
 
-        obs_pos_dim = 3
-        obs_sensors_dim = 7
-        control_dim = 7
         self.lstm_hidden_dim = 4
         self.lstm_num_layers = 2
         self.units = units
@@ -24,37 +23,14 @@ class DoorLSTMFilter(diffbayes.base.Filter):
         # Observation encoders
         self.image_rows = 32
         self.image_cols = 32
-        self.observation_image_layers = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, padding=2),
-            nn.ReLU(inplace=True),
-            resblocks.Conv2d(channels=32, kernel_size=3),
-            nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3, padding=1),
-            nn.Flatten(),  # 32 * 32 * 8
-            nn.Linear(8 * 32 * 32, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
-        self.observation_pose_layers = nn.Sequential(
-            nn.Linear(obs_pos_dim, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
-        self.observation_sensors_layers = nn.Sequential(
-            nn.Linear(obs_sensors_dim, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
+        self.observation_image_layers = layers.observation_image_layers(units)
+        self.observation_pos_layers = layers.observation_pos_layers(units)
+        self.observation_sensors_layers = layers.observation_sensors_layers(units)
 
         # Control layers
-        self.control_layers = nn.Sequential(
-            nn.Linear(control_dim, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
+        self.control_layers = layers.control_layers(units)
 
-        # Fusion layer
+        # Initial fusion layers
         self.fusion_layers = nn.Sequential(
             nn.Linear(units * 4, units), nn.ReLU(inplace=True), resblocks.Linear(units),
         )
@@ -62,7 +38,7 @@ class DoorLSTMFilter(diffbayes.base.Filter):
         # LSTM layers
         self.lstm = nn.LSTM(units, self.lstm_hidden_dim, self.lstm_num_layers)
 
-        # Define the output layer
+        # Output layers
         self.output_layers = nn.Sequential(
             nn.Linear(self.lstm_hidden_dim, units),
             nn.ReLU(inplace=True),
@@ -101,7 +77,7 @@ class DoorLSTMFilter(diffbayes.base.Filter):
         merged_features = torch.cat(
             (
                 image_features,
-                self.observation_pose_layers(observations["gripper_pos"]),
+                self.observation_pos_layers(observations["gripper_pos"]),
                 self.observation_sensors_layers(observations["gripper_sensors"]),
                 self.control_layers(controls),
             ),

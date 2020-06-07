@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Set, cast
 
 import torch
 import torch.nn as nn
@@ -6,6 +6,9 @@ import torch.nn as nn
 import diffbayes
 import diffbayes.types as types
 from fannypack.nn import resblocks
+
+from . import layers
+from .dynamics import DoorDynamicsModel
 
 
 class DoorParticleFilter(diffbayes.base.ParticleFilter):
@@ -25,117 +28,32 @@ class DoorParticleFilter(diffbayes.base.ParticleFilter):
         self.num_particles = 30 if mode else 300
         super().train(mode)
 
-class DoorDynamicsModel(diffbayes.base.DynamicsModel):
-    def __init__(self, units=64):
-        """Initializes a dynamics model for our door task.
-        """
-
-        Q = torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
-        super().__init__(state_dim=3, Q=Q)
-
-        control_dim = 7
-
-        # Build neural network
-        self.state_layers = nn.Sequential(
-            nn.Linear(self.state_dim, units),
-            resblocks.Linear(units),
-            resblocks.Linear(units),
-        )
-        self.control_layers = nn.Sequential(
-            nn.Linear(control_dim, units),
-            resblocks.Linear(units),
-            resblocks.Linear(units),
-        )
-        self.shared_layers = nn.Sequential(
-            nn.Linear(units * 2, units),
-            resblocks.Linear(units),
-            resblocks.Linear(units),
-            resblocks.Linear(units),
-            nn.Linear(units, self.state_dim + 1),
-        )
-        self.units = units
-
-    def forward(
-        self,
-        *,
-        initial_states: types.StatesTorch,
-        controls: types.ControlsTorch,
-        noisy: bool,
-    ) -> types.StatesTorch:
-        N, state_dim = initial_states.shape
-        assert state_dim == self.state_dim
-
-        # (N, control_dim) => (N, units // 2)
-        control_features = self.control_layers(controls)
-
-        # (N, state_dim) => (N, units // 2)
-        state_features = self.state_layers(initial_states)
-        assert state_features.shape == (N, self.units)
-
-        # (N, units)
-        merged_features = torch.cat((control_features, state_features), dim=1)
-        assert merged_features.shape == (N, self.units * 2)
-
-        # (N, units * 2) => (N, state_dim + 1)
-        output_features = self.shared_layers(merged_features)
-        assert output_features.shape == (N, state_dim + 1)
-
-        # We separately compute a direction for our network and a scalar "gate"
-        # These are multiplied to produce our final state output
-        state_update_direction = output_features[:, :state_dim]
-        state_update_gate = torch.sigmoid(output_features[:, -1:])
-        state_update = state_update_direction * state_update_gate
-        assert state_update.shape == (N, state_dim)
-
-        # Residual-style state update
-        states_new = initial_states + state_update
-
-        # Add noise
-        self.add_noise(states=states_new, enabled=noisy)
-
-        # Return (N, state_dim)
-        return states_new
-
 
 class DoorMeasurementModel(diffbayes.base.ParticleFilterMeasurementModel):
-    def __init__(self, units=64):
+    def __init__(
+        self, units: int = 64, modalities: Set[str] = {"image", "pos", "sensors"}
+    ):
         """Initializes a measurement model for our door task.
         """
 
         super().__init__(state_dim=3)
-        obs_pos_dim = 3
-        obs_sensors_dim = 7
 
-        self.observation_image_layers = nn.Sequential(
-            nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, padding=2),
-            nn.ReLU(inplace=True),
-            resblocks.Conv2d(channels=32, kernel_size=3),
-            nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3, padding=1),
-            nn.Flatten(),  # 32 * 32 * 8
-            nn.Linear(8 * 32 * 32, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
-        self.observation_pos_layers = nn.Sequential(
-            nn.Linear(obs_pos_dim, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
-        self.observation_sensors_layers = nn.Sequential(
-            nn.Linear(obs_sensors_dim, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
-        self.state_layers = nn.Sequential(
-            nn.Linear(self.state_dim, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-        )
+        valid_modalities = {"image", "pos", "sensors"}
+        assert len(valid_modalities | modalities) == 3, "Receivedi invalid modality"
+        assert len(modalities) > 0, "Received empty modality list"
+        self.modalities = modalities
+
+        if "image" in modalities:
+            self.observation_image_layers = layers.observation_image_layers(units)
+        if "pos" in modalities:
+            self.observation_pos_layers = layers.observation_pos_layers(units)
+        if "sensors" in modalities:
+            self.observation_sensors_layers = layers.observation_sensors_layers(units)
+
+        self.state_layers = layers.state_layers(units)
 
         self.shared_layers = nn.Sequential(
-            nn.Linear(units * 4, units),
+            nn.Linear(units * (1 + len(modalities)), units),
             nn.ReLU(inplace=True),
             resblocks.Linear(units),
             resblocks.Linear(units),
@@ -160,9 +78,14 @@ class DoorMeasurementModel(diffbayes.base.ParticleFilterMeasurementModel):
         # Construct observations feature vector
         # (N, obs_dim)
         obs = []
-        obs.append(self.observation_image_layers(observations["image"][:, None, :, :]))
-        obs.append(self.observation_pos_layers(observations["gripper_pos"]))
-        obs.append(self.observation_sensors_layers(observations["gripper_sensors"]))
+        if "image" in self.modalities:
+            obs.append(
+                self.observation_image_layers(observations["image"][:, None, :, :])
+            )
+        if "pos" in self.modalities:
+            obs.append(self.observation_pos_layers(observations["gripper_pos"]))
+        if "sensors" in self.modalities:
+            obs.append(self.observation_sensors_layers(observations["gripper_sensors"]))
         observation_features = torch.cat(obs, dim=1)
 
         # (N, obs_features) => (N, M, obs_features)
