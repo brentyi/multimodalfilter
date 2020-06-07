@@ -20,7 +20,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
 
         # Build neural network
         self.state_layers = layers.state_layers(units=units)
-        self.control_layers = layers.make_control_layers(units=units)
+        self.control_layers = layers.control_layers(units=units)
         self.shared_layers = nn.Sequential(
             nn.Linear(units * 2, units),
             resblocks.Linear(units),

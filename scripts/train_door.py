@@ -1,4 +1,5 @@
 import argparse
+import dataclasses
 
 import crossmodal
 import fannypack
@@ -22,7 +23,7 @@ fannypack.utils.pdb_safety_net()
 
 # Load training data
 train_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_300.hdf5", "panda_door_push_300.hdf5", **dataset_args
+    "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
 )
 
 # Create model, Buddy
@@ -38,8 +39,8 @@ train_helpers.configure(
 
 # Run model-specific training curriculum
 filter_model.train()
-if args.model_type == "lstm":
-    assert isinstance(filter_model, crossmodal.door_lstm.DoorLSTMFilter)
+if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
+    assert isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter)
 
     # Pre-train for single-step prediction
     train_helpers.train_e2e(subsequence_length=2, epochs=2, batch_size=32)
@@ -50,8 +51,8 @@ if args.model_type == "lstm":
     train_helpers.train_e2e(subsequence_length=16, epochs=10, batch_size=32)
     buddy.save_checkpoint("phase1")
 
-elif args.model_type == "particle_filter":
-    assert isinstance(filter_model, crossmodal.door_particle_filter.DoorParticleFilter)
+elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
+    assert isinstance(filter_model, crossmodal.door_models.DoorParticleFilter)
 
     # Pre-train dynamics (single-step)
     train_helpers.train_pf_dynamics_single_step(epochs=5)
@@ -74,9 +75,15 @@ elif args.model_type == "particle_filter":
     fannypack.utils.unfreeze_module(filter_model.dynamics_model)
     buddy.save_checkpoint("phase3")
 
+else:
+    assert False, "No training curriculum found for model type"
+
 # Eval model when done
 eval_trajectories = crossmodal.door_data.load_trajectories(
     "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
 )
 filter_model.eval()
 crossmodal.eval_helpers.eval_filter(filter_model, eval_trajectories)
+
+# Save eval results
+buddy.add_metadata({"eval_results": dataclasses.asdict(eval_results)})

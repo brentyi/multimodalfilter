@@ -1,4 +1,5 @@
 import argparse
+import dataclasses
 
 import crossmodal
 import diffbayes
@@ -11,6 +12,7 @@ fannypack.utils.pdb_safety_net()
 # Parse args
 parser = argparse.ArgumentParser()
 parser.add_argument("--experiment_name", type=str)
+parser.add_argument("--save", action="store_true")
 args = parser.parse_args()
 
 # Create and validate Buddy
@@ -34,4 +36,8 @@ trajectories = crossmodal.door_data.load_trajectories(
 
 # Run eval
 filter_model.eval()
-crossmodal.eval_helpers.eval_filter(filter_model, trajectories)
+eval_results = crossmodal.eval_helpers.eval_filter(filter_model, trajectories)
+
+# Save eval results
+if args.save:
+    buddy.add_metadata({"eval_results": dataclasses.asdict(eval_results)})

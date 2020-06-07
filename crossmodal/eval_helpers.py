@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Dict, List
 
 import numpy as np
@@ -7,10 +8,18 @@ import diffbayes
 import fannypack
 
 
+@dataclasses.dataclass(frozen=True)
+class EvalResults:
+    raw_rmse: List[float]
+    theta_rmse_deg: float
+    x_rmse_cm: float
+    y_rmse_cm: float
+
+
 def eval_filter(
     filter_model: diffbayes.base.Filter,
     trajectories: List[diffbayes.types.TrajectoryTupleNumpy],
-):
+) -> EvalResults:
     """Evaluate a filter and print out metrics.
 
     Args:
@@ -82,13 +91,21 @@ def eval_filter(
         ** 2,
         axis=0,
     )
-    rmse_raw = np.sqrt(mse / len(trajectories))
-    rmse = rmse_raw * np.array([0.39479038, 0.05650279, 0.0565098])
+    raw_rmse = np.sqrt(mse / len(trajectories))
+    rmse = raw_rmse * np.array([0.39479038, 0.05650279, 0.0565098])
+    results = EvalResults(
+        raw_rmse=list(raw_rmse),
+        theta_rmse_deg=rmse[0] * 180.0 / np.pi,
+        x_rmse_cm=rmse[1] * 100.0,
+        y_rmse_cm=rmse[2] * 100.0,
+    )
     print()
     print("-----")
-    print(f"Raw RMSE:   {rmse_raw}")
+    print(f"Raw RMSE:   {results.raw_rmse}")
     print("-----")
-    print(f"Theta RMSE: {rmse[0] * 180.0 / np.pi:.8f} degrees")
-    print(f"X RMSE:     {rmse[1] * 100.0:.8f} cm")
-    print(f"Y RMSE:     {rmse[2] * 100.0:.8f} cm")
+    print(f"Theta RMSE: {results.theta_rmse_deg:.8f} degrees")
+    print(f"X RMSE:     {results.x_rmse_cm:.8f} cm")
+    print(f"Y RMSE:     {results.y_rmse_cm:.8f} cm")
     print("-----")
+
+    return results
