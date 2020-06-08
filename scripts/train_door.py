@@ -1,5 +1,6 @@
 import argparse
 import dataclasses
+import datetime
 
 import crossmodal
 import fannypack
@@ -11,6 +12,7 @@ model_types = crossmodal.door_models.model_types
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_type", type=str, required=True, choices=model_types.keys())
 parser.add_argument("--experiment_name", type=str, required=True)
+parser.add_argument("--notes", type=str, default="(none)")
 crossmodal.door_data.add_dataset_arguments(parser)
 args = parser.parse_args()
 
@@ -29,7 +31,14 @@ train_trajectories = crossmodal.door_data.load_trajectories(
 # Create model, Buddy
 filter_model = model_types[args.model_type]()
 buddy = fannypack.utils.Buddy(args.experiment_name, filter_model)
-buddy.set_metadata({"model_type": args.model_type, "dataset_args": dataset_args})
+buddy.set_metadata(
+    {
+        "model_type": args.model_type,
+        "dataset_args": dataset_args,
+        "train_start_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),
+        "notes": args.notes,
+    }
+)
 
 # Configure training helpers
 train_helpers = crossmodal.train_helpers
@@ -48,7 +57,8 @@ if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
 
     # Train on longer sequences
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
-    train_helpers.train_e2e(subsequence_length=16, epochs=10, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
     buddy.save_checkpoint("phase1")
 
 elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
@@ -78,12 +88,15 @@ elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
 else:
     assert False, "No training curriculum found for model type"
 
+# Add training end time
+buddy.set_metadata(
+    {"train_end_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),}
+)
+
 # Eval model when done
 eval_trajectories = crossmodal.door_data.load_trajectories(
     "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
 )
 filter_model.eval()
-crossmodal.eval_helpers.eval_filter(filter_model, eval_trajectories)
-
-# Save eval results
+eval_results = crossmodal.eval_helpers.eval_filter(filter_model, eval_trajectories)
 buddy.add_metadata({"eval_results": dataclasses.asdict(eval_results)})

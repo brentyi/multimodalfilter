@@ -94,10 +94,10 @@ def eval_filter(
     raw_rmse = np.sqrt(mse / len(trajectories))
     rmse = raw_rmse * np.array([0.39479038, 0.05650279, 0.0565098])
     results = EvalResults(
-        raw_rmse=list(raw_rmse),
-        theta_rmse_deg=rmse[0] * 180.0 / np.pi,
-        x_rmse_cm=rmse[1] * 100.0,
-        y_rmse_cm=rmse[2] * 100.0,
+        raw_rmse=[float(x) for x in raw_rmse],
+        theta_rmse_deg=float(rmse[0] * 180.0 / np.pi),
+        x_rmse_cm=float(rmse[1] * 100.0),
+        y_rmse_cm=float(rmse[2] * 100.0),
     )
     print()
     print("-----")

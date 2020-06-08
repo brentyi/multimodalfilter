@@ -9,8 +9,9 @@ from ..base_models import (
     CrossmodalParticleFilterMeasurementModel,
     CrossmodalWeightModel,
 )
-from . import DoorMeasurementModel, layers
+from . import layers
 from .dynamics import DoorDynamicsModel
+from .pf import DoorMeasurementModel
 
 
 class DoorCrossmodalParticleFilter(diffbayes.base.ParticleFilter):
