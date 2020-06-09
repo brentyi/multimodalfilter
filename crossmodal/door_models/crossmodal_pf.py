@@ -27,6 +27,7 @@ class DoorCrossmodalParticleFilter(diffbayes.base.ParticleFilter):
                     DoorMeasurementModel(modalities={"pos", "sensors"}),
                 ],
                 crossmodal_weight_model=DoorCrossmodalWeightModel(),
+                state_dim=3,
             ),
             num_particles=30,
         )

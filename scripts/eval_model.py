@@ -11,7 +11,8 @@ fannypack.utils.pdb_safety_net()
 
 # Parse args
 parser = argparse.ArgumentParser()
-parser.add_argument("--experiment_name", type=str)
+parser.add_argument("--experiment-name", type=str)
+parser.add_argument("--checkpoint-label", type=str, default=None)
 parser.add_argument("--save", action="store_true")
 args = parser.parse_args()
 
@@ -25,13 +26,13 @@ filter_model: diffbayes.base.Filter = crossmodal.door_models.model_types[
     buddy.metadata["model_type"]
 ]()
 buddy.attach_model(filter_model)
-buddy.load_checkpoint()
+buddy.load_checkpoint(label=args.checkpoint_label)
 
 # Load trajectories using experiment metadata
 trajectories = crossmodal.door_data.load_trajectories(
     "panda_door_pull_10.hdf5",
     "panda_door_push_10.hdf5",
-    **(buddy.metadata["dataset_args"])
+    **buddy.metadata["dataset_args"]
 )
 
 # Run eval

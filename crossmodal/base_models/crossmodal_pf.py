@@ -14,6 +14,8 @@ class CrossmodalWeightModel(nn.Module, abc.ABC):
     """
 
     def __init__(self, modality_count: int):
+        super().__init__()
+
         self.modality_count = modality_count
         """int: Number of modalities."""
 
@@ -41,7 +43,10 @@ class CrossmodalParticleFilterMeasurementModel(
         *,
         measurement_models: List[diffbayes.base.ParticleFilterMeasurementModel],
         crossmodal_weight_model: CrossmodalWeightModel,
+        state_dim: int,
     ):
+        super().__init__(state_dim=state_dim)
+
         self.measurement_models = nn.ModuleList(measurement_models)
         """ nn.ModuleList: List of measurement models. """
 
@@ -74,7 +79,7 @@ class CrossmodalParticleFilterMeasurementModel(
         # Unimodal particle likelihoods
         unimodal_log_likelihoods = torch.stack(
             [
-                measurement_model(states, observations)
+                measurement_model(states=states, observations=observations)
                 for i, measurement_model in enumerate(self.measurement_models)
                 if self.enabled_models[i]
             ],
@@ -83,15 +88,15 @@ class CrossmodalParticleFilterMeasurementModel(
         assert unimodal_log_likelihoods.shape == (N, M, np.sum(self.enabled_models))
 
         # Compute modality-specific weights
-        modality_log_weights = self.crossmodal_weight_model(observations)[
-            :, :, self.enabled_models
+        modality_log_weights = self.crossmodal_weight_model(observations=observations)[
+            :, self.enabled_models
         ]
-        assert modality_log_weights.shape == (N, M, np.sum(self.enabled_models))
+        assert modality_log_weights.shape == (N, np.sum(self.enabled_models))
 
         # Weight particle likelihoods by modality & return
         particle_log_likelihoods = torch.logsumexp(
-            modality_log_weights + unimodal_log_likelihoods, dim=2
+            modality_log_weights[:, None, :] + unimodal_log_likelihoods, dim=2
         )
-        assert particle_log_likelihoods == (N, M)
+        assert particle_log_likelihoods.shape == (N, M)
 
         return particle_log_likelihoods
