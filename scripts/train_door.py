@@ -77,7 +77,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
     fannypack.utils.freeze_module(filter_model.dynamics_model)
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
-    train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
     fannypack.utils.unfreeze_module(filter_model.dynamics_model)
     buddy.save_checkpoint("phase3")
 
@@ -125,7 +125,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
 
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
-    train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
     buddy.save_checkpoint("phase4")
 
 else:
