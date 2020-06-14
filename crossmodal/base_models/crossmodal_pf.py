@@ -54,9 +54,34 @@ class CrossmodalParticleFilterMeasurementModel(
         """ crossmodal.base_models.CrossmodalParticleFilterWeightModel: Crossmodal
         weight model; should output one weight per measurement model. """
 
-        self.enabled_models: List[bool] = [True for _ in self.measurement_models]
-        """ List[bool]: List of booleans, one for each measurement model: set flag to
-        False to disable a modality."""
+        self._enabled_models: List[bool] = [True for _ in self.measurement_models]
+
+    @property
+    def enabled_models(self) -> List[bool]:
+        """List of enabled unimodal measurement models.
+
+        Returns:
+            List[bool]: List of booleans, one for each measurement model: set flag to
+            False to disable a modality.
+        """
+        return self._enabled_models
+
+    @enabled_models.setter
+    def enabled_models(self, enabled_models: List[bool]) -> None:
+        """Setter for the `enabled_models` property.
+
+        Args:
+            enabled_models (List[bool]):
+        """
+
+        # Type checks
+        assert isinstance(enabled_models, list)
+        assert len(enabled_models) == len(self.measurement_models)
+        for x in enabled_models:
+            assert type(x) == bool
+
+        # Assign value
+        self._enabled_models = enabled_models
 
     def forward(
         self, *, states: types.StatesTorch, observations: types.ObservationsTorch
@@ -81,17 +106,17 @@ class CrossmodalParticleFilterMeasurementModel(
             [
                 measurement_model(states=states, observations=observations)
                 for i, measurement_model in enumerate(self.measurement_models)
-                if self.enabled_models[i]
+                if self._enabled_models[i]
             ],
             dim=2,
         )
-        assert unimodal_log_likelihoods.shape == (N, M, np.sum(self.enabled_models))
+        assert unimodal_log_likelihoods.shape == (N, M, np.sum(self._enabled_models))
 
         # Compute modality-specific weights
         modality_log_weights = self.crossmodal_weight_model(observations=observations)[
-            :, self.enabled_models
+            :, self._enabled_models
         ]
-        assert modality_log_weights.shape == (N, np.sum(self.enabled_models))
+        assert modality_log_weights.shape == (N, np.sum(self._enabled_models))
 
         # Weight particle likelihoods by modality & return
         particle_log_likelihoods = torch.logsumexp(
