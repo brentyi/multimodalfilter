@@ -61,7 +61,7 @@ if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
     buddy.save_checkpoint("phase0")
 
     # Train on longer sequences
-    train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
     eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
     eval_helpers.log_eval()
@@ -71,12 +71,13 @@ if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
 
 elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
     # Pre-train dynamics (single-step)
-    train_helpers.train_pf_dynamics_single_step(epochs=5)
+    train_helpers.train_pf_dynamics_single_step(epochs=10)
     buddy.save_checkpoint("phase0")
 
     # Pre-train dynamics (recurrent)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=10)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase1")
 
@@ -89,7 +90,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
     buddy.save_checkpoint("phase2")
 
     # Train E2E
-    train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
     eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
     eval_helpers.log_eval()
