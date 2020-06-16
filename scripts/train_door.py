@@ -80,14 +80,15 @@ elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase1")
 
+    # Freeze dynamics
+    fannypack.utils.freeze_module(filter_model.dynamics_model)
+
     # Pre-train measurement model
     train_helpers.train_pf_measurement(epochs=5, batch_size=64)
-    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
 
-    # Train E2E (w/ frozen dynamics)
-    fannypack.utils.freeze_module(filter_model.dynamics_model)
+    # Train E2E
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
     eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
