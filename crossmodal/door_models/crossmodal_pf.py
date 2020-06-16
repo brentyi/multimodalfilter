@@ -54,7 +54,7 @@ class DoorCrossmodalWeightModel(CrossmodalWeightModel):
             nn.ReLU(inplace=True),
             resblocks.Linear(units),
             nn.Linear(units, modality_count),
-            # nn.LogSigmoid() <- consider?
+            # nn.LogSigmoid() # <- This drops performance slightly
         )
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
@@ -79,5 +79,7 @@ class DoorCrossmodalWeightModel(CrossmodalWeightModel):
 
         # Propagate through fusion layers
         output = self.fusion_layers(observation_features)
+        assert output.shape == (N, self.modality_count)
+        return output
         assert output.shape == (N, self.modality_count)
         return output

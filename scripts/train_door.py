@@ -26,9 +26,12 @@ dataset_args = crossmodal.door_data.get_dataset_args(args)
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
 fannypack.utils.pdb_safety_net()
 
-# Load training data
+# Load trajectories into memory
 train_trajectories = crossmodal.door_data.load_trajectories(
     "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
+)
+eval_trajectories = crossmodal.door_data.load_trajectories(
+    "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
 )
 
 # Create model, Buddy
@@ -39,18 +42,19 @@ buddy.set_metadata(
         "model_type": model_type,
         "dataset_args": dataset_args,
         "train_start_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),
+        "commit_hash": fannypack.utils.get_git_commit_hash(crossmodal.__file__),
         "notes": args.notes,
     }
 )
 
-# Configure training helpers
+# Configure helpers
 train_helpers = crossmodal.train_helpers
-train_helpers.configure(
-    buddy=buddy, filter_model=filter_model, trajectories=train_trajectories
-)
+train_helpers.configure(buddy=buddy, trajectories=train_trajectories)
+
+eval_helpers = crossmodal.eval_helpers
+eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories)
 
 # Run model-specific training curriculum
-filter_model.train()
 if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
     # Pre-train for single-step prediction
     train_helpers.train_e2e(subsequence_length=2, epochs=2, batch_size=32)
@@ -58,8 +62,11 @@ if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
 
     # Train on longer sequences
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    eval_helpers.log_eval()
     buddy.save_checkpoint("phase1")
 
 elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
@@ -70,18 +77,24 @@ elif isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
     # Pre-train dynamics (recurrent)
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=10)
+    eval_helpers.log_eval()
     buddy.save_checkpoint("phase1")
 
     # Pre-train measurement model
     train_helpers.train_pf_measurement(epochs=5, batch_size=64)
+    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
 
     # Train E2E (w/ frozen dynamics)
     fannypack.utils.freeze_module(filter_model.dynamics_model)
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
-    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
-    fannypack.utils.unfreeze_module(filter_model.dynamics_model)
+    eval_helpers.log_eval()
+    for _ in range(4):
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+        eval_helpers.log_eval()
     buddy.save_checkpoint("phase3")
 
 elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilter):
@@ -115,23 +128,28 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     measurement_model._enabled_models = [False, True]
     train_helpers.train_pf_measurement(epochs=3, batch_size=64)
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    eval_helpers.log_eval()
     buddy.save_checkpoint("phase3")
 
     # Enable both measurement models
     measurement_model._enabled_models = [True, True]
 
-    # Unfreeze weight model
+    # Unfreeze weight model, freeze measurement model
     fannypack.utils.unfreeze_module(measurement_model.crossmodal_weight_model)
-
-    # Freeze measurement models
     fannypack.utils.freeze_module(measurement_model.measurement_models)
 
     # Train everything end-to-end
     train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
-    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    eval_helpers.log_eval()
+    for _ in range(4):
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+        eval_helpers.log_eval()
     buddy.save_checkpoint("phase4")
 
 else:
@@ -143,9 +161,5 @@ buddy.add_metadata(
 )
 
 # Eval model when done
-eval_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
-)
-filter_model.eval()
-eval_results = crossmodal.eval_helpers.eval_filter(filter_model, eval_trajectories)
+eval_results = crossmodal.eval_helpers.run_eval()
 buddy.add_metadata({"eval_results": dataclasses.asdict(eval_results)})

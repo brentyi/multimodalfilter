@@ -27,13 +27,15 @@ buddy.attach_model(filter_model)
 buddy.load_checkpoint(label=args.checkpoint_label)
 
 # Load trajectories using experiment metadata
-trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
+eval_trajectories = crossmodal.door_data.load_trajectories(
+    # "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
+    ("panda_door_pull_100.hdf5", 10), ("panda_door_push_100.hdf5", 10), **dataset_args
 )
 
 # Run eval
-filter_model.eval()
-eval_results = crossmodal.eval_helpers.eval_filter(filter_model, trajectories)
+eval_helpers = crossmodal.eval_helpers
+eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories)
+eval_results = eval_helpers.run_eval()
 
 # Save eval results
 if args.save:
