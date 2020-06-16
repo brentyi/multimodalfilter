@@ -23,7 +23,7 @@ def configure(
     """
     assert isinstance(buddy.model, diffbayes.base.Filter)
     globals()["buddy"] = buddy
-    globals()["filter_model"] = cast(diffbayes.base.Fitler, buddy.model)
+    globals()["filter_model"] = cast(diffbayes.base.Filter, buddy.model)
     globals()["trajectories"] = trajectories
     globals()["num_workers"] = num_workers
 
