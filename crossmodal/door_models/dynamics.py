@@ -13,10 +13,12 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         """Initializes a dynamics model for our door task.
         """
 
-        Q = torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
-        super().__init__(state_dim=3, Q=Q)
+        super().__init__(state_dim=3)
 
         control_dim = 7
+
+        # Fixed dynamics covariance
+        self.Q = torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
 
         # Build neural network
         self.state_layers = layers.state_layers(units=units)
@@ -31,11 +33,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         self.units = units
 
     def forward(
-        self,
-        *,
-        initial_states: types.StatesTorch,
-        controls: types.ControlsTorch,
-        noisy: bool,
+        self, *, initial_states: types.StatesTorch, controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         N, state_dim = initial_states.shape
         assert state_dim == self.state_dim
@@ -62,11 +60,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         state_update = state_update_direction * state_update_gate
         assert state_update.shape == (N, state_dim)
 
-        # Residual-style state update
+        # Return residual-style state update, constant uncertainties
         states_new = initial_states + state_update
-
-        # Add noise
-        self.add_noise(states=states_new, enabled=noisy)
-
-        # Return (N, state_dim)
-        return states_new
+        covariances = self.Q[None, :, :].expand(N, state_dim, state_dim)
+        return states_new, covariances
