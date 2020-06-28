@@ -18,7 +18,9 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         control_dim = 7
 
         # Fixed dynamics covariance
-        self.Q = torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
+        self.Q_scale_tril = torch.cholesky(
+            torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
+        )
 
         # Build neural network
         self.state_layers = layers.state_layers(units=units)
@@ -62,5 +64,5 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
 
         # Return residual-style state update, constant uncertainties
         states_new = initial_states + state_update
-        covariances = self.Q[None, :, :].expand(N, state_dim, state_dim)
-        return states_new, covariances
+        scale_trils = self.Q_scale_tril[None, :, :].expand(N, state_dim, state_dim)
+        return states_new, scale_trils
