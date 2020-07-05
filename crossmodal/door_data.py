@@ -191,8 +191,8 @@ def load_trajectories(
             ## > end effector position delta
             ## > binary contact reading
             eef_positions = raw_trajectory["eef_pos"]
-            eef_positions_shifted = np.roll(eef_positions, shift=-1)
-            eef_positions_shifted[-1] = eef_positions[-1]
+            eef_positions_shifted = np.roll(eef_positions, shift=1, axis=0)
+            eef_positions_shifted[0] = eef_positions[0]
             controls = np.concatenate(
                 [
                     eef_positions_shifted,
@@ -204,13 +204,13 @@ def load_trajectories(
             assert controls.shape == (timesteps, 7)
 
             # Normalize data
-            observations["gripper_pos"] -= np.array(
-                [[0.37334135, -0.10821614, 1.5769919]]
+            gripper_pos -= np.array(
+                [[0.37334135, -0.10821614, 1.5769919]], dtype=np.float32
             )
-            observations["gripper_pos"] /= np.array(
-                [[0.13496609, 0.14862472, 0.04533212]]
+            gripper_pos /= np.array(
+                [[0.13496609, 0.14862472, 0.04533212]], dtype=np.float32
             )
-            observations["gripper_sensors"] -= np.array(
+            gripper_sensors -= np.array(
                 [
                     [
                         11.064128,
@@ -221,9 +221,10 @@ def load_trajectories(
                         -0.14174654,
                         0.63155425,
                     ]
-                ]
+                ],
+                dtype=np.float32,
             )
-            observations["gripper_sensors"] /= np.array(
+            gripper_sensors /= np.array(
                 [
                     [
                         36.36674,
@@ -234,35 +235,38 @@ def load_trajectories(
                         0.64844555,
                         0.48232532,
                     ]
-                ]
+                ],
+                dtype=np.float32,
             )
             states -= np.array([[0.64900873, -0.00079839, -0.00069189]])
             states /= np.array([[0.39479038, 0.05650279, 0.0565098]])
             controls -= np.array(
                 [
                     [
-                        -0.1074974,
-                        1.5747472,
-                        0.374877,
-                        0.48083794,
-                        -1.6832547,
-                        1.2024931,
-                        0.63155425,
+                        3.7333974e-01,
+                        -1.0831217e-01,
+                        1.5769361e00,
+                        3.1821314e-06,
+                        9.5862495e-05,
+                        4.8311016e-05,
+                        6.3155425e-01,
                     ]
-                ]
+                ],
+                dtype=np.float32,
             )
             controls /= np.array(
                 [
                     [
-                        0.15000738,
-                        0.07635409,
-                        0.14191878,
-                        0.15354143,
-                        0.1670589,
-                        0.1371131,
+                        0.134951,
+                        0.14904341,
+                        0.04531819,
+                        0.00323106,
+                        0.00411722,
+                        0.00165688,
                         0.48232532,
                     ]
-                ]
+                ],
+                dtype=np.float32,
             )
 
             trajectories.append(
