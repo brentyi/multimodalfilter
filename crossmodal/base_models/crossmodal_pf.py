@@ -71,10 +71,10 @@ class CrossmodalParticleFilterMeasurementModel(
         """Setter for the `enabled_models` property.
 
         Args:
-            enabled_models (List[bool]):
+            enabled_models (List[bool]): New value.
         """
 
-        # Type checks
+        # Input validation
         assert isinstance(enabled_models, list)
         assert len(enabled_models) == len(self.measurement_models)
         for x in enabled_models:

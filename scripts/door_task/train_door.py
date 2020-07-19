@@ -26,14 +26,6 @@ dataset_args = crossmodal.door_data.get_dataset_args(args)
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
 fannypack.utils.pdb_safety_net()
 
-# Load trajectories into memory
-train_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
-)
-eval_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
-)
-
 # Create model, Buddy
 filter_model = model_types[model_type]()
 buddy = fannypack.utils.Buddy(args.experiment_name, filter_model)
@@ -45,6 +37,14 @@ buddy.set_metadata(
         "commit_hash": fannypack.utils.get_git_commit_hash(crossmodal.__file__),
         "notes": args.notes,
     }
+)
+
+# Load trajectories into memory
+train_trajectories = crossmodal.door_data.load_trajectories(
+    "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
+)
+eval_trajectories = crossmodal.door_data.load_trajectories(
+    "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
 )
 
 # Configure helpers
@@ -111,6 +111,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     buddy.save_checkpoint("phase0")
 
     # Pre-train dynamics (recurrent)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
     buddy.save_checkpoint("phase1")
@@ -119,17 +120,17 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
     # Pre-train measurement model (image)
-    measurement_model._enabled_models = [True, False]
+    measurement_model.enabled_models = [True, False]
     train_helpers.train_pf_measurement(epochs=3, batch_size=64)
-    train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
     train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
     buddy.save_checkpoint("phase2")
 
     # Pre-train measurement model (proprioception + haptics)
-    measurement_model._enabled_models = [False, True]
+    measurement_model.enabled_models = [False, True]
     train_helpers.train_pf_measurement(epochs=3, batch_size=64)
-    train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
     eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
     eval_helpers.log_eval()
@@ -138,14 +139,14 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     buddy.save_checkpoint("phase3")
 
     # Enable both measurement models
-    measurement_model._enabled_models = [True, True]
+    measurement_model.enabled_models = [True, True]
 
     # Unfreeze weight model, freeze measurement model
     fannypack.utils.unfreeze_module(measurement_model.crossmodal_weight_model)
     fannypack.utils.freeze_module(measurement_model.measurement_models)
 
     # Train everything end-to-end
-    train_helpers.train_e2e(subsequence_length=3, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
     eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
     eval_helpers.log_eval()
