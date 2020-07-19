@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, cast
+from typing import Dict, List, cast
 
 import numpy as np
 import torch
@@ -11,27 +11,23 @@ import fannypack
 buddy: fannypack.utils.Buddy
 filter_model: diffbayes.base.Filter
 trajectories: List[diffbayes.types.TrajectoryTupleNumpy]
+task: str
 
 
 def configure(
     *,
     buddy: fannypack.utils.Buddy,
     trajectories: List[diffbayes.types.TrajectoryTupleNumpy],
+    task: str,
 ):
     """Configure global settings for eval helpers.
     """
+    assert task in ("door", "push")
     assert isinstance(buddy.model, diffbayes.base.Filter)
     globals()["buddy"] = buddy
     globals()["filter_model"] = cast(diffbayes.base.Filter, buddy.model)
     globals()["trajectories"] = trajectories
-
-
-@dataclasses.dataclass(frozen=True)
-class EvalResults:
-    raw_rmse: List[float]
-    theta_rmse_deg: float
-    x_rmse_cm: float
-    y_rmse_cm: float
+    globals()["task"] = task
 
 
 def log_eval() -> None:
@@ -44,7 +40,7 @@ def log_eval() -> None:
         buddy.log_scalar("y_rmse_cm", results.y_rmse_cm)
 
 
-def run_eval() -> EvalResults:
+def run_eval(task) -> Dict[str, float]:
     """Evaluate a filter, print out + return metrics.
     """
     assert isinstance(filter_model, diffbayes.base.Filter)
@@ -114,20 +110,36 @@ def run_eval() -> EvalResults:
             axis=0,
         )
         raw_rmse = np.sqrt(mse / len(trajectories))
-        rmse = raw_rmse * np.array([0.39479038, 0.05650279, 0.0565098])
-        results = EvalResults(
-            raw_rmse=[float(x) for x in raw_rmse],
-            theta_rmse_deg=float(rmse[0] * 180.0 / np.pi),
-            x_rmse_cm=float(rmse[1] * 100.0),
-            y_rmse_cm=float(rmse[2] * 100.0),
-        )
-        print()
-        print("-----")
-        print(f"Raw RMSE:   {results.raw_rmse}")
-        print("-----")
-        print(f"Theta RMSE: {results.theta_rmse_deg:.8f} degrees")
-        print(f"X RMSE:     {results.x_rmse_cm:.8f} cm")
-        print(f"Y RMSE:     {results.y_rmse_cm:.8f} cm")
-        print("-----")
+
+        if task == "door":
+            rmse = raw_rmse * np.array([0.39479038, 0.05650279, 0.0565098])
+            results = {
+                "theta_rmse_deg": float(rmse[0] * 180.0 / np.pi),
+                "x_rmse_cm": float(rmse[1] * 100.0),
+                "y_rmse_cm": float(rmse[2] * 100.0),
+            }
+            print()
+            print("-----")
+            print(f"Raw RMSE:   {results.raw_rmse}")
+            print("-----")
+            print(f"Theta RMSE: {results['theta_rmse_deg']:.8f} degrees")
+            print(f"X RMSE:     {results['x_rmse_cm']:.8f} cm")
+            print(f"Y RMSE:     {results['y_rmse_cm']:.8f} cm")
+            print("-----")
+        elif task == "push":
+            rmse = raw_rmse * np.array([0.0572766, 0.06118315])
+            results = {
+                "x_rmse_cm": float(rmse[0] * 100.0),
+                "y_rmse_cm": float(rmse[1] * 100.0),
+            }
+            print()
+            print("-----")
+            print(f"Raw RMSE:   {results.raw_rmse}")
+            print("-----")
+            print(f"X RMSE:     {results['x_rmse_cm']:.8f} cm")
+            print(f"Y RMSE:     {results['y_rmse_cm']:.8f} cm")
+            print("-----")
+        else:
+            assert False, "Invalid task!"
 
     return results

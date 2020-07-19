@@ -52,7 +52,7 @@ train_helpers = crossmodal.train_helpers
 train_helpers.configure(buddy=buddy, trajectories=train_trajectories)
 
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories)
+eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task="push")
 
 # Run model-specific training curriculum
 if isinstance(filter_model, crossmodal.push_models.PushLSTMFilter):

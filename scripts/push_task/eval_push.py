@@ -33,7 +33,7 @@ eval_trajectories = crossmodal.push_data.load_trajectories(
 
 # Run eval
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories)
+eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task="push")
 eval_results = eval_helpers.run_eval()
 
 # Save eval results
