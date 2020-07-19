@@ -40,7 +40,7 @@ def log_eval() -> None:
         buddy.log_scalar("y_rmse_cm", results.y_rmse_cm)
 
 
-def run_eval(task) -> Dict[str, float]:
+def run_eval() -> Dict[str, float]:
     """Evaluate a filter, print out + return metrics.
     """
     assert isinstance(filter_model, diffbayes.base.Filter)
@@ -134,7 +134,7 @@ def run_eval(task) -> Dict[str, float]:
             }
             print()
             print("-----")
-            print(f"Raw RMSE:   {results.raw_rmse}")
+            print(f"Raw RMSE:   {raw_rmse}")
             print("-----")
             print(f"X RMSE:     {results['x_rmse_cm']:.8f} cm")
             print(f"Y RMSE:     {results['y_rmse_cm']:.8f} cm")
