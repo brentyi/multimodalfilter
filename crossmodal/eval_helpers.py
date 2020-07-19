@@ -35,9 +35,8 @@ def log_eval() -> None:
     """
     results = run_eval()
     with buddy.log_scope("eval"):
-        buddy.log_scalar("theta_rmse_deg", results.theta_rmse_deg)
-        buddy.log_scalar("x_rmse_cm", results.x_rmse_cm)
-        buddy.log_scalar("y_rmse_cm", results.y_rmse_cm)
+        for key, value in results.items():
+            buddy.log_scalar(key, value)
 
 
 def run_eval() -> Dict[str, float]:
