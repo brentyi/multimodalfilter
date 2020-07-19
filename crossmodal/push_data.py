@@ -170,7 +170,7 @@ def load_trajectories(
                 [
                     eef_positions_shifted,
                     eef_positions - eef_positions_shifted,
-                    raw_trajectory["contact-obs"][:, np.newaxis],
+                    raw_trajectory["contact"][:, np.newaxis],
                 ],
                 axis=1,
             )
@@ -288,26 +288,3 @@ def _print_normalization(trajectories):
         states=states,
         controls=controls,
     )
-
-
-### Reference
-#
-# Valid trajectory keys:
-# [
-#     "contact-obs",
-#     "depth",
-#     "ee-force-obs",
-#     "ee-torque-obs",
-#     "eef_pos",
-#     "eef_quat",
-#     "eef_vang",
-#     "eef_vlin",
-#     "gripper_qpos",
-#     "gripper_qvel",
-#     "image",
-#     "joint_pos",
-#     "joint_vel",
-#     "object-state",
-#     "prev-act",
-#     "robot-state",
-# ]

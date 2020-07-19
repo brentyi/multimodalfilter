@@ -57,7 +57,7 @@ eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories)
 # Run model-specific training curriculum
 if isinstance(filter_model, crossmodal.push_models.PushLSTMFilter):
     # Pre-train for single-step prediction
-    train_helpers.train_e2e(subsequence_length=2, epochs=2, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=2, epochs=5, batch_size=32)
     buddy.save_checkpoint("phase0")
 
     # Train on longer sequences
@@ -65,7 +65,7 @@ if isinstance(filter_model, crossmodal.push_models.PushLSTMFilter):
     eval_helpers.log_eval()
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
     eval_helpers.log_eval()
-    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=16, epochs=15, batch_size=32)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase1")
 

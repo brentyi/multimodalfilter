@@ -48,6 +48,7 @@ class _DualSpanningAvgPool(nn.Module):
     """
 
     def __init__(self, rows, cols, reduce_size=1):
+        super().__init__()
         self.pool_h = nn.Sequential(nn.AvgPool2d((rows, reduce_size)), nn.Flatten(),)
         self.pool_w = nn.Sequential(nn.AvgPool2d((reduce_size, cols)), nn.Flatten(),)
 
@@ -72,7 +73,7 @@ def observation_image_layers(units: int, spanning_avg_pool: bool = False) -> nn.
             resblocks.Conv2d(channels=32, kernel_size=3),
             nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels=16, out_channels=2, kernel_size=3, padding=1),
             _DualSpanningAvgPool(rows=32, cols=32, reduce_size=2),
             nn.Linear(32 * 2, units),
             nn.ReLU(inplace=True),
