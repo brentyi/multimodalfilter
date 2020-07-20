@@ -43,7 +43,7 @@ def train_pf_dynamics_single_step(*, epochs, batch_size=32):
     )
     for _ in range(epochs):
         diffbayes.train.train_dynamics_single_step(
-            buddy, filter_model.dynamics_model, dataloader
+            buddy, filter_model.dynamics_model, dataloader, loss_function="mse"
         )
 
 
@@ -63,7 +63,7 @@ def train_pf_dynamics_recurrent(*, subsequence_length, epochs, batch_size=32):
     )
     for _ in range(epochs):
         diffbayes.train.train_dynamics_recurrent(
-            buddy, filter_model.dynamics_model, dataloader
+            buddy, filter_model.dynamics_model, dataloader, loss_function="mse"
         )
 
 

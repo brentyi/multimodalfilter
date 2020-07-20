@@ -13,14 +13,10 @@ class PushDynamicsModel(diffbayes.base.DynamicsModel):
         """Initializes a dynamics model for our door task.
         """
 
-        super().__init__(state_dim=3)
-
-        control_dim = 7
+        super().__init__(state_dim=2)
 
         # Fixed dynamics covariance
-        self.Q_scale_tril = torch.cholesky(
-            torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
-        )
+        self.Q_scale_tril = torch.cholesky(torch.diag(torch.FloatTensor([0.01, 0.01])))
 
         # Build neural network
         self.state_layers = layers.state_layers(units=units)
@@ -64,5 +60,9 @@ class PushDynamicsModel(diffbayes.base.DynamicsModel):
 
         # Return residual-style state update, constant uncertainties
         states_new = initial_states + state_update
-        scale_trils = self.Q_scale_tril[None, :, :].expand(N, state_dim, state_dim)
+        scale_trils = (
+            self.Q_scale_tril[None, :, :]
+            .expand(N, state_dim, state_dim)
+            .to(states_new.device)
+        )
         return states_new, scale_trils
