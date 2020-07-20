@@ -1,5 +1,4 @@
 import argparse
-import dataclasses
 import datetime
 from typing import cast
 
@@ -164,4 +163,4 @@ buddy.add_metadata(
 
 # Eval model when done
 eval_results = crossmodal.eval_helpers.run_eval()
-buddy.add_metadata({"eval_results": dataclasses.asdict(eval_results)})
+buddy.add_metadata({"eval_results": eval_results})

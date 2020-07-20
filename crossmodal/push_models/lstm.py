@@ -16,7 +16,7 @@ class PushLSTMFilter(diffbayes.base.Filter):
         """
         super().__init__(state_dim=2)
 
-        self.lstm_hidden_dim = 16
+        self.lstm_hidden_dim = 4
         self.lstm_num_layers = 2
         self.units = units
 

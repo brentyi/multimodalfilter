@@ -1,5 +1,4 @@
 import argparse
-import dataclasses
 
 import crossmodal
 import diffbayes
@@ -38,4 +37,4 @@ eval_results = eval_helpers.run_eval()
 
 # Save eval results
 if args.save:
-    buddy.add_metadata({"eval_results": dataclasses.asdict(eval_results)})
+    buddy.add_metadata({"eval_results": eval_results})

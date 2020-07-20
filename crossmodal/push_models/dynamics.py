@@ -16,7 +16,10 @@ class PushDynamicsModel(diffbayes.base.DynamicsModel):
         super().__init__(state_dim=2)
 
         # Fixed dynamics covariance
-        self.Q_scale_tril = torch.cholesky(torch.diag(torch.FloatTensor([0.01, 0.01])))
+        self.Q_scale_tril = nn.Parameter(
+            torch.cholesky(torch.diag(torch.FloatTensor([0.01, 0.01]))),
+            requires_grad=False,
+        )
 
         # Build neural network
         self.state_layers = layers.state_layers(units=units)
@@ -60,9 +63,5 @@ class PushDynamicsModel(diffbayes.base.DynamicsModel):
 
         # Return residual-style state update, constant uncertainties
         states_new = initial_states + state_update
-        scale_trils = (
-            self.Q_scale_tril[None, :, :]
-            .expand(N, state_dim, state_dim)
-            .to(states_new.device)
-        )
+        scale_trils = self.Q_scale_tril[None, :, :].expand(N, state_dim, state_dim)
         return states_new, scale_trils
