@@ -69,7 +69,7 @@ class PushMeasurementModel(diffbayes.base.ParticleFilterMeasurementModel):
         self, *, states: types.StatesTorch, observations: types.ObservationsTorch
     ) -> types.StatesTorch:
         assert type(observations) == dict
-        assert len(states.shape) == 2  # (N, M, state_dim)
+        assert len(states.shape) == 3  # (N, M, state_dim)
         assert states.shape[2] == self.state_dim
         observations = cast(types.TorchDict, observations)
 
