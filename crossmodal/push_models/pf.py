@@ -45,7 +45,7 @@ class PushMeasurementModel(diffbayes.base.ParticleFilterMeasurementModel):
 
         if "image" in modalities:
             self.observation_image_layers = layers.observation_image_layers(
-                units, spanning_avg_pool=True
+                units, spanning_avg_pool=False
             )
         if "pos" in modalities:
             self.observation_pos_layers = layers.observation_pos_layers(units)

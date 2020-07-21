@@ -16,7 +16,7 @@ class PushLSTMFilter(diffbayes.base.Filter):
         """
         super().__init__(state_dim=2)
 
-        self.lstm_hidden_dim = 4
+        self.lstm_hidden_dim = 32
         self.lstm_num_layers = 2
         self.units = units
 
@@ -24,7 +24,7 @@ class PushLSTMFilter(diffbayes.base.Filter):
         self.image_rows = 32
         self.image_cols = 32
         self.observation_image_layers = layers.observation_image_layers(
-            units, spanning_avg_pool=True
+            units, spanning_avg_pool=False
         )
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)

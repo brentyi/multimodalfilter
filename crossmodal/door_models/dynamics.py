@@ -18,8 +18,9 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
         control_dim = 7
 
         # Fixed dynamics covariance
-        self.Q_scale_tril = torch.cholesky(
-            torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))
+        self.Q_scale_tril = nn.Parameter(
+            torch.cholesky(torch.diag(torch.FloatTensor([0.05, 0.01, 0.01]))),
+            requires_grad=False,
         )
 
         # Build neural network

@@ -202,13 +202,13 @@ def load_trajectories(
             assert controls.shape == (timesteps, 7)
 
             # Normalize data
-            gripper_pos -= np.array(
+            observations["gripper_pos"] -= np.array(
                 [[0.37334135, -0.10821614, 1.5769919]], dtype=np.float32
             )
-            gripper_pos /= np.array(
+            observations["gripper_pos"] /= np.array(
                 [[0.13496609, 0.14862472, 0.04533212]], dtype=np.float32
             )
-            gripper_sensors -= np.array(
+            observations["gripper_sensors"] -= np.array(
                 [
                     [
                         11.064128,
@@ -222,7 +222,7 @@ def load_trajectories(
                 ],
                 dtype=np.float32,
             )
-            gripper_sensors /= np.array(
+            observations["gripper_sensors"] /= np.array(
                 [
                     [
                         36.36674,

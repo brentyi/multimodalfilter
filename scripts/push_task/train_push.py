@@ -69,6 +69,8 @@ if isinstance(filter_model, crossmodal.push_models.PushLSTMFilter):
     buddy.save_checkpoint("phase1")
 
 elif isinstance(filter_model, crossmodal.push_models.PushParticleFilter):
+    assert False, "Experimental"
+
     # Pre-train dynamics (single-step)
     train_helpers.train_pf_dynamics_single_step(epochs=10)
     buddy.save_checkpoint("phase0")
@@ -99,6 +101,8 @@ elif isinstance(filter_model, crossmodal.push_models.PushParticleFilter):
     buddy.save_checkpoint("phase3")
 
 elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalParticleFilter):
+    assert False, "Experimental"
+
     # Pull out measurement model, freeze crossmodal weights
     measurement_model: CrossmodalParticleFilterMeasurementModel = cast(
         CrossmodalParticleFilterMeasurementModel, filter_model.measurement_model,
@@ -110,6 +114,7 @@ elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalParticleFilte
     buddy.save_checkpoint("phase0")
 
     # Pre-train dynamics (recurrent)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
     buddy.save_checkpoint("phase1")

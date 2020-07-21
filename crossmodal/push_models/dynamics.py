@@ -17,7 +17,7 @@ class PushDynamicsModel(diffbayes.base.DynamicsModel):
 
         # Fixed dynamics covariance
         self.Q_scale_tril = nn.Parameter(
-            torch.cholesky(torch.diag(torch.FloatTensor([0.01, 0.01]))),
+            torch.cholesky(torch.diag(torch.FloatTensor([0.02, 0.02]))),
             requires_grad=False,
         )
 
