@@ -35,7 +35,8 @@ def log_eval() -> None:
     results = run_eval()
     with buddy.log_scope("eval"):
         for key, value in results.items():
-            buddy.log_scalar(key, value)
+            if type(value) == float:
+                buddy.log_scalar(key, value)
 
 
 def run_eval() -> Dict[str, float]:
