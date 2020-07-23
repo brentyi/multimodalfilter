@@ -1,5 +1,5 @@
 import torch.nn as nn
-
+import torch
 from fannypack.nn import resblocks
 
 state_dim = 3
@@ -69,7 +69,9 @@ def observation_pos_layers(units: int) -> nn.Module:
         nn.Module: Encoder block.
     """
     return nn.Sequential(
-        nn.Linear(obs_pos_dim, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+        nn.Linear(obs_pos_dim, units),
+        nn.ReLU(inplace=True),
+        resblocks.Linear(units),
     )
 
 
