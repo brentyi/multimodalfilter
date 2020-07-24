@@ -12,15 +12,19 @@ from .dynamics import PushDynamicsModel
 
 
 class PushKalmanFilter(diffbayes.base.KalmanFilter):
-    def __init__(self):
+    def __init__(self, dynamics_model=None, measurement_model=None):
         """Initializes a particle filter for our door task.
         """
-
-        super().__init__(
-            dynamics_model=PushDynamicsModel(),
-            measurement_model=PushKalmanFilterMeasurementModel(),
-        )
-
+        if dynamics_model is None and measurement_model is None:
+            super().__init__(
+                dynamics_model=PushDynamicsModel(),
+                measurement_model=PushKalmanFilterMeasurementModel(),
+            )
+        else:
+            super().__init__(
+                dynamics_model=dynamics_model,
+                measurement_model=measurement_model,
+            )
 
 class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementModel):
     def __init__(
@@ -35,7 +39,7 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         super().__init__(state_dim=2, noise_R_tril=noise_R_tril)
 
         valid_modalities = {"image", "pos", "sensors"}
-        assert len(valid_modalities | modalities) == 3, "Received invalid modality"
+        assert len(valid_modalities | modalities) == 2, "Received invalid modality"
         assert len(modalities) > 0, "Received empty modality list"
         self.modalities = modalities
 
