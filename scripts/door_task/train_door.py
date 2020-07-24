@@ -40,9 +40,9 @@ buddy.set_metadata(
 )
 
 # Load trajectories into memory
-# train_trajectories = crossmodal.door_data.load_trajectories(
-#     "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
-# )
+train_trajectories = crossmodal.door_data.load_trajectories(
+    "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
+)
 eval_trajectories = crossmodal.door_data.load_trajectories(
     "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
 )
