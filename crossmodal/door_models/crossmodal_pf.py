@@ -23,7 +23,7 @@ class DoorCrossmodalParticleFilter(diffbayes.base.ParticleFilter):
             dynamics_model=DoorDynamicsModel(),
             measurement_model=CrossmodalParticleFilterMeasurementModel(
                 measurement_models=[
-                    DoorMeasurementModel(modalities={"image"}),
+                    DoorMeasurementModel(modalities={"pos", "image"}),
                     DoorMeasurementModel(modalities={"pos", "sensors"}),
                 ],
                 crossmodal_weight_model=DoorCrossmodalWeightModel(),
