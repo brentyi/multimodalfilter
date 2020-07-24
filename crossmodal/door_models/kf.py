@@ -12,14 +12,19 @@ from .dynamics import DoorDynamicsModel
 
 
 class DoorKalmanFilter(diffbayes.base.KalmanFilter):
-    def __init__(self):
+    def __init__(self, dynamics_model=None, measurement_model=None):
         """Initializes a particle filter for our door task.
         """
-
-        super().__init__(
-            dynamics_model=DoorDynamicsModel(),
-            measurement_model=DoorKalmanFilterMeasurementModel(),
-        )
+        if dynamics_model is None and measurement_model is None:
+            super().__init__(
+                dynamics_model=DoorDynamicsModel(),
+                measurement_model=DoorKalmanFilterMeasurementModel(),
+            )
+        else:
+            super().__init__(
+                dynamics_model=dynamics_model,
+                measurement_model=measurement_model,
+            )
 
 
 class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementModel):
