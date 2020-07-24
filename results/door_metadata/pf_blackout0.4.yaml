@@ -1,0 +1,16 @@
+dataset_args:
+  image_blackout_ratio: 0.4
+  sequential_image_rate: 1
+  use_haptics: true
+  use_proprioception: true
+  use_vision: true
+eval_results:
+  raw_rmse:
+  - 0.02047099359333515
+  - 0.016363777220249176
+  - 0.02164989709854126
+  theta_rmse_deg: 0.46305024283845597
+  x_rmse_cm: 0.09245990678825229
+  y_rmse_cm: 0.12234313550591469
+model_type: DoorParticleFilter
+train_end_time: Jun 07, 2020 @ 18:31:01

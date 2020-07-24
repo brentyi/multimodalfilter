@@ -1,0 +1,18 @@
+dataset_args:
+  image_blackout_ratio: 0.0
+  sequential_image_rate: 1
+  use_haptics: true
+  use_proprioception: true
+  use_vision: true
+eval_results:
+  raw_rmse:
+  - 0.019208775833249092
+  - 0.018213283270597458
+  - 0.015713518485426903
+  theta_rmse_deg: 0.43449910106519346
+  x_rmse_cm: 0.10291013198490812
+  y_rmse_cm: 0.08879677869077772
+model_type: DoorCrossmodalParticleFilter
+notes: (none)
+train_end_time: Jun 14, 2020 @ 5:53:46
+train_start_time: Jun 14, 2020 @ 0:38:35
