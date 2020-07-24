@@ -24,14 +24,14 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter):
         super().__init__(
             filter_models= [
                 PushKalmanFilter(
-                    dynamics_model=PushDynamicsModel,
+                    dynamics_model=PushDynamicsModel(),
                     measurement_model=PushKalmanFilterMeasurementModel(
                         modalities={"image"}
                     ),
 
                 ),
                 PushKalmanFilter(
-                    dynamics_model=PushDynamicsModel,
+                    dynamics_model=PushDynamicsModel(),
                     measurement_model=PushKalmanFilterMeasurementModel(
                         modalities={"pos", "sensors"}
                     ),

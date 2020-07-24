@@ -47,7 +47,7 @@ class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
         """
 
         super().__init__(
-            dynamics_model=DoorDynamicsModel,
+            dynamics_model=DoorDynamicsModel(),
             measurement_model=CrossmodalKalmanFilterMeasurementModel(
                 measurement_models=[
                     DoorKalmanFilterMeasurementModel(modalities={"image"}),
