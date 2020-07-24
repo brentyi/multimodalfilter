@@ -1,0 +1,19 @@
+commit_hash: eef3b3cb92090d1025d8dcd7980ab52d92635a72
+dataset_args:
+  image_blackout_ratio: 0.4
+  sequential_image_rate: 1
+  use_haptics: true
+  use_proprioception: true
+  use_vision: true
+eval_results:
+  raw_rmse:
+  - 0.01869693584740162
+  - 0.01408445369452238
+  - 0.012334507890045643
+  theta_rmse_deg: 0.4229213714029523
+  x_rmse_cm: 0.07958109293663222
+  y_rmse_cm: 0.06970205739649013
+model_type: DoorParticleFilter
+notes: (none)
+train_end_time: Jun 16, 2020 @ 7:04:13
+train_start_time: Jun 16, 2020 @ 4:43:43

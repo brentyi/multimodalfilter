@@ -1,0 +1,16 @@
+dataset_args:
+  image_blackout_ratio: 0.4
+  sequential_image_rate: 1
+  use_haptics: true
+  use_proprioception: true
+  use_vision: true
+eval_results:
+  raw_rmse:
+  - 0.024939319118857384
+  - 0.029401270672678947
+  - 0.02033974602818489
+  theta_rmse_deg: 0.5641229733945329
+  x_rmse_cm: 0.16612538225515372
+  y_rmse_cm: 0.11493949801035225
+model_type: DoorLSTMFilter
+start_time: Jun 07, 2020 @ 16:52:50

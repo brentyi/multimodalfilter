@@ -1,0 +1,18 @@
+dataset_args:
+  image_blackout_ratio: 0.0
+  sequential_image_rate: 1
+  use_haptics: true
+  use_proprioception: true
+  use_vision: true
+eval_results:
+  raw_rmse:
+  - 0.026260094717144966
+  - 0.01725027896463871
+  - 0.013321313075721264
+  theta_rmse_deg: 0.5939986830777839
+  x_rmse_cm: 0.09746888897803983
+  y_rmse_cm: 0.07527847376463935
+model_type: DoorCrossmodalParticleFilter
+notes: disabled log sigmoid, 10 epochs unfrozen measurement model
+train_end_time: Jun 15, 2020 @ 6:00:11
+train_start_time: Jun 15, 2020 @ 0:36:25

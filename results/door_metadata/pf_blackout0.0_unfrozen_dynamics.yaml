@@ -1,0 +1,18 @@
+dataset_args:
+  image_blackout_ratio: 0.0
+  sequential_image_rate: 1
+  use_haptics: true
+  use_proprioception: true
+  use_vision: true
+eval_results:
+  raw_rmse:
+  - 0.0710114985704422
+  - 0.14889384806156158
+  - 0.13214506208896637
+  theta_rmse_deg: 1.6062674978351543
+  x_rmse_cm: 0.8412917829314321
+  y_rmse_cm: 0.7467491029635072
+model_type: DoorParticleFilter
+notes: unfrozen dynamics model
+train_end_time: Jun 15, 2020 @ 2:56:43
+train_start_time: Jun 15, 2020 @ 0:38:39
