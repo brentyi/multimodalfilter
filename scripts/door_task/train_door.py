@@ -40,12 +40,15 @@ buddy.set_metadata(
 )
 
 # Load trajectories into memory
-train_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
-)
+# train_trajectories = crossmodal.door_data.load_trajectories(
+#     "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
+# )
 eval_trajectories = crossmodal.door_data.load_trajectories(
     "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
 )
+
+#todo: jsut for debugging
+train_trajectories = eval_trajectories
 
 # Configure helpers
 train_helpers = crossmodal.train_helpers
@@ -172,21 +175,23 @@ if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
 
 elif isinstance(filter_model, crossmodal.door_models.DoorKalmanFilter):
     # Pre-train dynamics (single-step)
-    train_helpers.train_pf_dynamics_single_step(epochs=10)
-    buddy.save_checkpoint("phase0")
-
-    # Pre-train dynamics (recurrent)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
-    eval_helpers.log_eval()
-    buddy.save_checkpoint("phase1")
+    # train_helpers.train_pf_dynamics_single_step(epochs=10)
+    # buddy.save_checkpoint("phase0")
+    #
+    # # Pre-train dynamics (recurrent)
+    # train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
+    # train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
+    # train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
+    # eval_helpers.log_eval()
+    # buddy.save_checkpoint("phase1")
 
     # Freeze dynamics
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
     # Pre-train measurement model
-    train_helpers.train_kf_measurement(epochs=5, batch_size=64)
+    train_helpers.train_kf_measurement(epochs=1, batch_size=64)
+
+    # train_helpers.train_kf_measurement(epochs=5, batch_size=64)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
 

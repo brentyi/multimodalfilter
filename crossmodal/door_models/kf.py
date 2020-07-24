@@ -52,11 +52,11 @@ class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
             self.observation_sensors_layers = layers.observation_sensors_layers(units)
 
         self.shared_layers = nn.Sequential(
-            nn.Linear(units * (len(modalities)), units),
+            nn.Linear(units * (len(modalities)), units * 2),
             nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-            resblocks.Linear(units),
-            nn.Linear(units, 2),
+            resblocks.Linear(units * 2),
+            resblocks.Linear(units * 2),
+            # nn.Linear(units, units),
         )
 
         self.r_layer = nn.Sequential(
@@ -78,7 +78,7 @@ class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         )
 
         self.units = units
-        self.add_R_noise = add_R_noise
+        self.add_R_noise = torch.ones(self.state_dim) * add_R_noise
 
     def forward(
         self, *, observations: types.ObservationsTorch
@@ -102,14 +102,8 @@ class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         if "sensors" in self.modalities:
             obs.append(self.observation_sensors_layers(observations["gripper_sensors"]))
         observation_features = torch.cat(obs, dim=1)
-
-        # (N, obs_features) => (N, M, obs_features)
-        observation_features = observation_features[:, None, :].expand(
-            N, self.units * len(obs)
-        )
         assert observation_features.shape == (N, self.units * len(obs))
 
-        # (N, M, merged_dim) => (N, M, 1)
         shared_features = self.shared_layers(observation_features)
 
         shared_features_z = shared_features[:, :self.units].clone()
@@ -129,5 +123,4 @@ class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         if self.add_R_noise[0] > 0:
             measurement_covariance += torch.diag(self.add_R_noise).to(measurement_covariance.device)
 
-        # Return (N, M)
         return measurement_prediction, measurement_covariance

@@ -111,7 +111,7 @@ def train_kf_measurement(*, epochs, batch_size=32, model=None):
     )
     for _ in range(epochs):
         diffbayes.train.train_kalman_filter_measurement_model(
-            buddy, model.measurement_model, dataloader, loss_function="mse"
+            buddy, model.measurement_model, dataloader,
         )
 
 def train_e2e(*, subsequence_length, epochs, batch_size=32, initial_cov_scale=0.1, measurement_init=False, model=None):
