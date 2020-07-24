@@ -8,7 +8,7 @@ setup(
     author="brentyi",
     author_email="brentyi@berkeley.edu",
     license="BSD",
-    packages=find_packages("crossmodal"),
+    packages=["crossmodal"],
     install_requires=[
         "fannypack",
         "diffbayes @ https://github.com/brentyi/diffbayes/tarball/master",
