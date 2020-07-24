@@ -114,7 +114,8 @@ def train_kf_measurement(*, epochs, batch_size=32, model=None):
             buddy, model.measurement_model, dataloader,
         )
 
-def train_e2e(*, subsequence_length, epochs, batch_size=32, initial_cov_scale=0.1, measurement_init=False, model=None):
+def train_e2e(*, subsequence_length, epochs, batch_size=32, initial_cov_scale=0.1,
+              measurement_initialize=False, model=None):
 
     if model is None:
         model = filter_model
@@ -137,5 +138,5 @@ def train_e2e(*, subsequence_length, epochs, batch_size=32, initial_cov_scale=0.
     for _ in range(epochs):
         diffbayes.train.train_filter(
             buddy, model, dataloader, initial_covariance=initial_covariance,
-            measurement_initialization=measurement_init,
+            measurement_initialize=measurement_initialize,
         )

@@ -24,14 +24,14 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
         super().__init__(
             filter_models= [
                 DoorKalmanFilter(
-                    dynamics_model=DoorDynamicsModel,
+                    dynamics_model=DoorDynamicsModel(),
                     measurement_model=DoorKalmanFilterMeasurementModel(
                         modalities={"image"}
                     ),
 
                 ),
                 DoorKalmanFilter(
-                    dynamics_model=DoorDynamicsModel,
+                    dynamics_model=DoorDynamicsModel(),
                     measurement_model=DoorKalmanFilterMeasurementModel(
                         modalities={"pos", "sensors"}
                     ),
