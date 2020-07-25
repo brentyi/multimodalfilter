@@ -46,18 +46,21 @@ class PushDynamicsModel(diffbayes.base.DynamicsModel):
         state_features = self.state_layers(initial_states)
 
         # (N, units)
-        merged_features = torch.cat((control_features, state_features), dim=1)
+        merged_features = torch.cat((control_features, state_features), dim=-1)
 
         # (N, units * 2) => (N, state_dim + 1)
         output_features = self.shared_layers(merged_features)
 
         # We separately compute a direction for our network and a scalar "gate"
         # These are multiplied to produce our final state output
-        state_update_direction = output_features[:, :state_dim]
-        state_update_gate = torch.sigmoid(output_features[:, -1:])
+        state_update_direction = output_features[..., :state_dim]
+        state_update_gate = torch.sigmoid(output_features[..., -1:])
         state_update = state_update_direction * state_update_gate
 
         # Return residual-style state update, constant uncertainties
         states_new = initial_states + state_update
         scale_trils = self.Q_scale_tril[None, :, :].expand(N, state_dim, state_dim)
         return states_new, scale_trils
+
+
+# RuntimeError: size mismatch, m1: [40 x 64], m2: [128 x 64] at /tmp/pip-req-build-58y_cjjl/aten/src/THC/generic/THCTensorMathBlas.cu:273

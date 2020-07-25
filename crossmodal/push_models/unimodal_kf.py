@@ -35,7 +35,7 @@ class PushUnimodalKalmanFilter(UnimodalKalmanFilter):
                     ),
                 )
             ],
-            state_dim=3,
+            state_dim=2,
         )
 
 class PushMeasurementUnimodalKalmanFilter(PushKalmanFilter):

@@ -25,13 +25,20 @@ dataset_args = crossmodal.push_data.get_dataset_args(args)
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
 fannypack.utils.pdb_safety_net()
 
+#todo: take this out
 # Load trajectories into memory
+
+# train_trajectories = crossmodal.push_data.load_trajectories(
+#     "gentle_push_1000.hdf5", **dataset_args
+# )
 train_trajectories = crossmodal.push_data.load_trajectories(
-    "gentle_push_1000.hdf5", **dataset_args
+    "gentle_push_100.hdf5", **dataset_args
 )
 eval_trajectories = crossmodal.push_data.load_trajectories(
     "gentle_push_10.hdf5", **dataset_args
 )
+
+# train_trajectories = eval_trajectories
 
 # Create model, Buddy
 filter_model = model_types[model_type]()
@@ -170,17 +177,22 @@ elif isinstance(filter_model, crossmodal.push_models.PushKalmanFilter):
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
     # Pre-train measurement model
-    train_helpers.train_kf_measurement(epochs=5, batch_size=64)
+    buddy.set_learning_rate(value=0.0001, optimizer_name="train_measurement")
+    train_helpers.train_kf_measurement(epochs=10, batch_size=32)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
 
     # Train E2E
-    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    buddy.set_learning_rate(value=5e-6, optimizer_name="train_filter_recurrent")
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,
+                            measurement_initialize=True)
     eval_helpers.log_eval()
-    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32,
+                            measurement_initialize=True)
     eval_helpers.log_eval()
     for _ in range(4):
-        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32,
+                            measurement_initialize=True)
         eval_helpers.log_eval()
     buddy.save_checkpoint("phase3")
 
@@ -193,29 +205,34 @@ elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter)
     # Pre-train dynamics (single-step)
     train_helpers.train_pf_dynamics_single_step(epochs=5, model=image_model)
     buddy.save_checkpoint("phase0")
-    buddy.load_checkpoint_module(source="image_model.dynamics_model",
-                                 target="force_model.dynamics_model",
+    buddy.load_checkpoint_module(source="filter_models.0.dynamics_model",
+                                 target="filter_models.1.dynamics_model",
                                  label="phase0")
 
     # Pre-train dynamics (recurrent)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, \
+                                              epochs=5, model=image_model)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=8,
+                                              epochs=5, model=image_model)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16,
+                                              epochs=5, model=image_model)
     buddy.save_checkpoint("phase1")
-    buddy.load_checkpoint_module(source="image_model.dynamics_model",
-                                 target="force_model.dynamics_model",
+    buddy.load_checkpoint_module(source="filter_models.0.dynamics_model",
+                                 target="filter_models.1.dynamics_model",
                                  label="phase1")
     # Freeze dynamics
-    fannypack.utils.freeze_module(filter_model.dynamics_model)
+    fannypack.utils.freeze_module(image_model.dynamics_model)
+    fannypack.utils.freeze_module(force_model.dynamics_model)
 
     # Pre-train measurement model
-    train_helpers.train_kf_measurement(epochs=3, batch_size=64, model=image_model)
-    train_helpers.train_kf_measurement(epochs=3, batch_size=64, model=force_model)
+    train_helpers.train_kf_measurement(epochs=4, batch_size=64,
+                                       model=image_model,)
+    train_helpers.train_kf_measurement(epochs=4, batch_size=64, model=force_model,)
     buddy.save_checkpoint("phase2")
 
     # Pre-train kalman filter (image)
     filter_model.enabled_models = [True, False]
-    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,)
     train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
     train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
 
@@ -306,6 +323,77 @@ elif isinstance(filter_model, crossmodal.push_models.PushMeasurementCrossmodalKa
     for _ in range(4):
         train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
         eval_helpers.log_eval()
+    buddy.save_checkpoint("phase4")
+
+elif isinstance(filter_model, crossmodal.push_models.PushUnimodalKalmanFilter):
+    image_model = filter_model.filter_models[0]
+    force_model = filter_model.filter_models[1]
+
+    # Pre-train dynamics (single-step)
+    train_helpers.train_pf_dynamics_single_step(epochs=5, model=image_model)
+    buddy.save_checkpoint("phase0")
+    buddy.load_checkpoint_module(source="filter_models.0.dynamics_model",
+                                 target="filter_models.1.dynamics_model",
+                                 label="phase0")
+
+    # Pre-train dynamics (recurrent)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4,\
+                                              epochs=5, model=image_model)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=8,
+                                              epochs=5, model=image_model)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16,
+                                              epochs=5, model=image_model)
+    buddy.save_checkpoint("phase1")
+    buddy.load_checkpoint_module(source="filter_models.0.dynamics_model",
+                                 target="filter_models.1.dynamics_model",
+                                 label="phase1")
+    # Freeze dynamics
+    fannypack.utils.freeze_module(image_model.dynamics_model)
+    fannypack.utils.freeze_module(force_model.dynamics_model)
+
+    # Pre-train measurement model
+    train_helpers.train_kf_measurement(epochs=3, batch_size=64, model=image_model)
+    train_helpers.train_kf_measurement(epochs=3, batch_size=64, model=force_model)
+    buddy.save_checkpoint("phase2")
+
+    # Pre-train kalman filter (image)
+    filter_model.enabled_models = [True, False]
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    print("kalman image")
+    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+
+    # Pre-train kalman filter (proprioception + haptics)
+    filter_model.enabled_models = [False, True]
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    print("kalman force")
+    eval_helpers.log_eval()
+    buddy.save_checkpoint("phase3")
+
+    # Enable both filter models
+    filter_model.enabled_models = [True, True]
+
+    # Unfreeze weight model, freeze filter model
+    fannypack.utils.freeze_module(filter_model.filter_models)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+
+    # Train everything end-to-end
+    fannypack.utils.unfreeze_module(filter_model.filter_models)
+
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    for _ in range(4):
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+        eval_helpers.log_eval()
+        print("kalman e2e")
     buddy.save_checkpoint("phase4")
 
 else:

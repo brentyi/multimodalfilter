@@ -39,24 +39,24 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         super().__init__(state_dim=2, noise_R_tril=noise_R_tril)
 
         valid_modalities = {"image", "pos", "sensors"}
-        assert len(valid_modalities | modalities) == 2, "Received invalid modality"
+        assert len(valid_modalities | modalities) == 3, "Receivedi invalid modality"
         assert len(modalities) > 0, "Received empty modality list"
         self.modalities = modalities
 
         if "image" in modalities:
             self.observation_image_layers = layers.observation_image_layers(units,
-                                                                            spanning_avg_pool=True)
+                                            spanning_avg_pool=True)
         if "pos" in modalities:
             self.observation_pos_layers = layers.observation_pos_layers(units)
         if "sensors" in modalities:
             self.observation_sensors_layers = layers.observation_sensors_layers(units)
 
         self.shared_layers = nn.Sequential(
-            nn.Linear(units * (len(modalities)), units),
+            nn.Linear(units * (len(modalities)), units * 2),
             nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-            resblocks.Linear(units),
-            nn.Linear(units, 2),
+            resblocks.Linear(units * 2),
+            resblocks.Linear(units * 2),
+            # nn.Linear(units, units),
         )
 
         self.r_layer = nn.Sequential(
@@ -78,7 +78,7 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         )
 
         self.units = units
-        self.add_R_noise = add_R_noise
+        self.add_R_noise = torch.ones(self.state_dim) * add_R_noise
 
     def forward(
         self, *, observations: types.ObservationsTorch
@@ -86,6 +86,8 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         assert type(observations) == dict
         observations = cast(types.TorchDict, observations)
 
+        # N := distinct trajectory count
+        # M := particle count
         N, _ = observations["gripper_pos"].shape
 
         # Construct observations feature vector
@@ -100,14 +102,8 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         if "sensors" in self.modalities:
             obs.append(self.observation_sensors_layers(observations["gripper_sensors"]))
         observation_features = torch.cat(obs, dim=1)
-
-        # (N, obs_features) => (N, M, obs_features)
-        observation_features = observation_features[:, None, :].expand(
-            N, self.units * len(obs)
-        )
         assert observation_features.shape == (N, self.units * len(obs))
 
-        # (N, M, merged_dim) => (N, M, 1)
         shared_features = self.shared_layers(observation_features)
 
         shared_features_z = shared_features[:, :self.units].clone()
@@ -125,9 +121,6 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
 
         measurement_covariance = lt ** 2
         if self.add_R_noise[0] > 0:
-            measurement_covariance += torch.diag(
-                self.add_R_noise).to(
-                measurement_covariance.device)
+            measurement_covariance += torch.diag(self.add_R_noise).to(measurement_covariance.device)
 
-        # Return (N, M)
         return measurement_prediction, measurement_covariance
