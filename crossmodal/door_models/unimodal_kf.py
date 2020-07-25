@@ -51,6 +51,7 @@ class DoorMeasurementUnimodalKalmanFilter(DoorKalmanFilter):
                     DoorKalmanFilterMeasurementModel(modalities={"image"}),
                     DoorKalmanFilterMeasurementModel(modalities={"pos", "sensors"})
                 ],
+                state_dim=3,
             ),
         )
 

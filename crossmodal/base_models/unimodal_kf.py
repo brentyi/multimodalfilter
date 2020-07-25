@@ -83,21 +83,26 @@ class UnimodalKalmanFilterMeasurementModel(
         unimodal_covariances = torch.stack(
             [x[1] for x in model_list]
         )
-        unimodal_precision = torch.stack(
-            [1./(x[1] + 1e-9) for x in model_list]
-        )
 
-        assert unimodal_states.shape == (np.sum(self._enabled_models), N, self.state_dim,)
-        assert unimodal_covariances.shape == (np.sum(self._enabled_models),
-                                                          N,
-                                                          self.state_dim,
-                                                          self.state_dim)
+        if np.sum(self._enabled_models) == 1:
+            weighted_states = unimodal_states[0]
+            weighted_covariances = unimodal_covariances[0]
+        else:
+            unimodal_precision = torch.stack(
+                [1./(x[1] + 1e-9) for x in model_list]
+            )
 
-        unimodal_weights = torch.diagonal(unimodal_precision, dim1=-2, dim2=-1).squeeze(1)
-        assert unimodal_weights.shape == unimodal_states.shape
+            assert unimodal_states.shape == (np.sum(self._enabled_models), N, self.state_dim,)
+            assert unimodal_covariances.shape == (np.sum(self._enabled_models),
+                                                              N,
+                                                              self.state_dim,
+                                                              self.state_dim)
 
-        weighted_states = weighted_average(unimodal_states, unimodal_weights)
-        weighted_covariances = torch.inverse(torch.sum(unimodal_precision, dim=0)+1e-9)
+            unimodal_weights = torch.diagonal(unimodal_precision, dim1=-2, dim2=-1).squeeze(1)
+            assert unimodal_weights.shape == unimodal_states.shape
+
+            weighted_states = weighted_average(unimodal_states, unimodal_weights)
+            weighted_covariances = torch.inverse(torch.sum(unimodal_precision, dim=0)+1e-9)
 
         assert weighted_states.shape == (N, self.state_dim,)
         assert weighted_covariances.shape == (N,
@@ -183,8 +188,8 @@ class UnimodalKalmanFilter(
         ])
 
         if np.sum(self._enabled_models) == 1:
-            weighted_states = unimodal_states[self._enabled_models]
-            weighted_covariances = unimodal_covariances[self._enabled_models]
+            weighted_states = unimodal_states[0]
+            weighted_covariances = unimodal_covariances[0]
 
         else:
 
