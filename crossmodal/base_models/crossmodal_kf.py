@@ -93,8 +93,7 @@ class CrossmodalKalmanFilterMeasurementModel(
         self, *, observations: types.ObservationsTorch
     ) -> types.StatesTorch:
         """Observation model forward pass, over batch size `N`.
-        For each member of a batch, we expect `M` separate states (particles)
-        and one unique observation.
+        For each member of a batch, we expect one unique observation.
 
         Args:
             observations (dict or torch.Tensor): Measurement inputs. Should be
@@ -123,19 +122,21 @@ class CrossmodalKalmanFilterMeasurementModel(
                                                           N,
                                                           self.state_dim,
                                                           self.state_dim)
-        state_weights, covariance_weights = self.crossmodal_weight_model(observations=observations)
+
+        if np.sum(self._enabled_models) < len(self._enabled_models):
+            state_weights = torch.from_numpy(np.array(self._enabled_models).astype(float))
+            state_weights = state_weights.unsqueeze(-1).unsqueeze(-1).repeat(1, N, self.state_dim)
+        else:
+            state_weights = self.crossmodal_weight_model(observations=observations)
         state_weights = state_weights[self._enabled_models]
-        covariance_weight = covariance_weights[self._enabled_models]
 
         # note: my crossmodal weights will look different in output than PF
         assert state_weights.shape == (np.sum(self._enabled_models), N, self.state_dim)
-        assert covariance_weights.shape == (np.sum(self._enabled_models),
-                                            N,
-                                            self.state_dim,
-                                            self.state_dim)
 
         weighted_states = weighted_average(unimodal_states, state_weights)
-        weighted_covariances = weighted_average(unimodal_covariances, covariance_weights)
+        covariance_multiplier = torch.prod(torch.prod(state_weights, dim=-1), dim=0).unsqueeze(-1)
+        assert covariance_multiplier.shape == (N, 1)
+        weighted_covariances = covariance_multiplier * torch.sum(unimodal_covariances, dim=0)
 
         assert weighted_states.shape == (N, self.state_dim)
         assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)
@@ -231,18 +232,20 @@ class CrossmodalKalmanFilter(
                                               N,
                                               self.state_dim,
                                               self.state_dim)
-        state_weights, covariance_weights = self.crossmodal_weight_model(observations=observations)
+
+        if np.sum(self._enabled_models) < len(self._enabled_models):
+            state_weights = torch.from_numpy(np.array(self._enabled_models).astype(float))
+            state_weights = state_weights.unsqueeze(-1).unsqueeze(-1).repeat(1, N, self.state_dim)
+        else:
+            state_weights = self.crossmodal_weight_model(observations=observations)
         state_weights = state_weights[self._enabled_models]
-        covariance_weights = covariance_weights[self.enabled_models]
         # note: my crossmodal weights will look different in output than PF
         assert state_weights.shape == (np.sum(self._enabled_models), N, self.state_dim)
-        assert covariance_weights.shape == (np.sum(self._enabled_models),
-                                            N,
-                                            self.state_dim,
-                                            self.state_dim)
 
         weighted_states = weighted_average(unimodal_states, state_weights)
-        weighted_covariances = weighted_average(unimodal_covariances, covariance_weights)
+        weighted_covariances = torch.prod(state_weights, dim=-1) * torch.sum(
+            unimodal_covariances, dim=0)
+
 
         assert weighted_states.shape == (N, self.state_dim)
         assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)

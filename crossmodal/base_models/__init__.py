@@ -8,3 +8,8 @@ from .crossmodal_kf import (
     CrossmodalKalmanFilterMeasurementModel,
     CrossmodalKalmanFilterWeightModel,
 )
+
+from .unimodal_kf import (
+    UnimodalKalmanFilter,
+    UnimodalKalmanFilterMeasurementModel,
+)

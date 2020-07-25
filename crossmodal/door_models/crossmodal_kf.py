@@ -103,12 +103,6 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
 
         state_weights = output.reshape(self.modality_count, N, self.state_dim)
 
-        state_covariances = []
-        # todo: do non-diagnonal terms
-        for i in range(self.modality_count):
-            state_covariances.append(
-                torch.diag_embed(1. / (state_weights[i, :, :] + 1e-9), offset=0, dim1=-2, dim2=-1)
-            )
-        state_covariances = torch.stack(state_covariances)
+        state_weights = state_weights / (torch.sum(state_weights, dim=0) + 1e-9)
 
-        return state_weights, state_covariances
+        return state_weights

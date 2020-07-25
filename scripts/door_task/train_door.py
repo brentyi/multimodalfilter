@@ -171,7 +171,7 @@ if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
     buddy.save_checkpoint("phase1")
 
 elif isinstance(filter_model, crossmodal.door_models.DoorKalmanFilter):
-    # Pre-train dynamics (single-step)
+    #Pre-train dynamics (single-step)
     train_helpers.train_pf_dynamics_single_step(epochs=10)
     buddy.save_checkpoint("phase0")
 
@@ -185,7 +185,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorKalmanFilter):
     # Freeze dynamics
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
-    # Pre-train measurement model
+    #Pre-train measurement model
     train_helpers.train_kf_measurement(epochs=5, batch_size=64)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
