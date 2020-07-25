@@ -10,6 +10,7 @@ from .pf import DoorMeasurementModel, DoorParticleFilter
 from .kf import DoorKalmanFilterMeasurementModel, DoorKalmanFilter
 from .crossmodal_kf import DoorCrossmodalKalmanFilter, DoorMeasurementCrossmodalKalmanFilter, \
     DoorCrossmodalKalmanFilterWeightModel
+from .unimodal_kf import DoorUnimodalKalmanFilter, DoorMeasurementUnimodalKalmanFilter
 
 model_types: _Dict[str, _diffbayes.base.Filter] = {}
 """ (dict) Map from estimator model names to estimator model classes.
@@ -18,5 +19,6 @@ model_types: _Dict[str, _diffbayes.base.Filter] = {}
 for _model in (DoorLSTMFilter,
                DoorParticleFilter, DoorCrossmodalParticleFilter,
                DoorCrossmodalKalmanFilter,
-               DoorKalmanFilter, DoorMeasurementCrossmodalKalmanFilter):
+               DoorKalmanFilter, DoorMeasurementCrossmodalKalmanFilter,
+               DoorUnimodalKalmanFilter, DoorMeasurementUnimodalKalmanFilter):
     model_types[_model.__name__] = _model
