@@ -48,65 +48,67 @@ def run_eval() -> Dict[str, float]:
     # Put model in eval mode
     filter_model.eval()
 
-    # Convert list of trajectories -> batch
-    #
-    # Note that we need to jump through some hoops because the observations are stored as
-    # dictionaries
-    states = []
-    observations = fannypack.utils.SliceWrapper({})
-    controls = []
-    min_timesteps = min([s.shape[0] for s, o, c in trajectories])
-    for (s, o, c) in trajectories:
-        # Update batch
-        states.append(s[:min_timesteps])
-        observations.append(fannypack.utils.SliceWrapper(o)[:min_timesteps])
-        controls.append(c[:min_timesteps])
+    with torch.no_grad():
 
-    # Numpy -> torch
-    # > We create a batch axis @ index 1
-    device = next(filter_model.parameters()).device
-    stack_fn = lambda list_value: fannypack.utils.to_torch(
-        np.stack(list_value, axis=1), device=device
-    )
+        # Convert list of trajectories -> batch
+        #
+        # Note that we need to jump through some hoops because the observations are stored as
+        # dictionaries
+        states = []
+        observations = fannypack.utils.SliceWrapper({})
+        controls = []
+        min_timesteps = min([s.shape[0] for s, o, c in trajectories])
+        for (s, o, c) in trajectories:
+            # Update batch
+            states.append(s[:min_timesteps])
+            observations.append(fannypack.utils.SliceWrapper(o)[:min_timesteps])
+            controls.append(c[:min_timesteps])
 
-    states = stack_fn(states)
-    observations = observations.map(stack_fn)
-    controls = stack_fn(controls)
+        # Numpy -> torch
+        # > We create a batch axis @ index 1
+        device = next(filter_model.parameters()).device
+        stack_fn = lambda list_value: fannypack.utils.to_torch(
+            np.stack(list_value, axis=1), device=device
+        )
 
-    # Get sequence length (T) and batch size (N) dimensions
-    assert states.shape[:2] == controls.shape[:2]
-    assert states.shape[:2] == fannypack.utils.SliceWrapper(observations).shape[:2]
-    T, N = states.shape[:2]
+        states = stack_fn(states)
+        observations = observations.map(stack_fn)
+        controls = stack_fn(controls)
 
-    # Initialize beliefs
-    state_dim = filter_model.state_dim
-    cov = (torch.eye(state_dim, device=device) * 0.1)[None, :, :].expand(
-        (N, state_dim, state_dim)
-    )
-    filter_model.initialize_beliefs(
-        mean=states[0], covariance=cov,
-    )
+        # Get sequence length (T) and batch size (N) dimensions
+        assert states.shape[:2] == controls.shape[:2]
+        assert states.shape[:2] == fannypack.utils.SliceWrapper(observations).shape[:2]
+        T, N = states.shape[:2]
 
-    # Run filter
-    predicted_states = filter_model.forward_loop(
-        observations=fannypack.utils.SliceWrapper(observations)[1:],
-        controls=controls[1:],
-    )
+        # Initialize beliefs
+        state_dim = filter_model.state_dim
+        cov = (torch.eye(state_dim, device=device) * 0.1)[None, :, :].expand(
+            (N, state_dim, state_dim)
+        )
+        filter_model.initialize_beliefs(
+            mean=states[0], covariance=cov,
+        )
 
-    # Validate predicted states
-    T = predicted_states.shape[0]
-    assert predicted_states.shape == (T, N, state_dim)
+        # Run filter
+        predicted_states = filter_model.forward_loop(
+            observations=fannypack.utils.SliceWrapper(observations)[1:],
+            controls=controls[1:],
+        )
 
-    # Compute & update errors
-    true_states = states[1:]
-    start_truncation = 30
-    mse = np.mean(
-        fannypack.utils.to_numpy(
-            predicted_states[start_truncation:] - true_states[start_truncation:]
-        ).reshape((-1, state_dim))
-        ** 2,
-        axis=0,
-    )
+        # Validate predicted states
+        T = predicted_states.shape[0]
+        assert predicted_states.shape == (T, N, state_dim)
+
+        # Compute & update errors
+        true_states = states[1:]
+        start_truncation = 30
+        mse = np.mean(
+            fannypack.utils.to_numpy(
+                predicted_states[start_truncation:] - true_states[start_truncation:]
+            ).reshape((-1, state_dim))
+            ** 2,
+            axis=0,
+        )
     raw_rmse = np.sqrt(mse / len(trajectories))
 
     if task == "door":

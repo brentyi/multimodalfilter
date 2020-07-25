@@ -131,6 +131,7 @@ def train_e2e(*, subsequence_length, epochs, batch_size=32, initial_cov_scale=0.
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
+        drop_last=True,
     )
     initial_covariance = (
         torch.eye(model.state_dim, device=buddy.device) * initial_cov_scale

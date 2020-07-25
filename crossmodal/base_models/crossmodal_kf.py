@@ -103,8 +103,8 @@ class CrossmodalKalmanFilterMeasurementModel(
             torch.Tensor: Measurement state prediction. Shape should be `(N, state_dim)`
             torch.Tensor: Measurement state prediction covariance. Shape should be `(N, state_dim, state_dim)`.
         """
-        shape = list(observations.value())[0]
-        N = shape[0]
+        N = observations[[*observations][0]].shape[0]
+
 
         model_list = [
             (measurement_model(observations=observations)) for i, measurement_model
@@ -123,9 +123,10 @@ class CrossmodalKalmanFilterMeasurementModel(
                                                           N,
                                                           self.state_dim,
                                                           self.state_dim)
-        state_weights, covariance_weights = self.crossmodal_weight_model(observations=observations)[
-            :, self._enabled_models
-        ]
+        state_weights, covariance_weights = self.crossmodal_weight_model(observations=observations)
+        state_weights = state_weights[self._enabled_models]
+        covariance_weight = covariance_weights[self._enabled_models]
+
         # note: my crossmodal weights will look different in output than PF
         assert state_weights.shape == (np.sum(self._enabled_models), N, self.state_dim)
         assert covariance_weights.shape == (np.sum(self._enabled_models),
@@ -134,10 +135,10 @@ class CrossmodalKalmanFilterMeasurementModel(
                                             self.state_dim)
 
         weighted_states = weighted_average(unimodal_states, state_weights)
-        weighted_covariances = weighted_average(unimodal_covariances, state_weights)
+        weighted_covariances = weighted_average(unimodal_covariances, covariance_weights)
 
         assert weighted_states.shape == (N, self.state_dim)
-        assert weighted_covariances == (N, self.state_dim, self.state_dim)
+        assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)
 
         return weighted_states, weighted_covariances
 
