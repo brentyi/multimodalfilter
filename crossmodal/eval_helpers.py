@@ -114,7 +114,7 @@ def run_eval() -> Dict[str, float]:
     if task == "door":
         rmse = raw_rmse * np.array([0.39479038, 0.05650279, 0.0565098])
         results = {
-            "raw_rmse": list(raw_rmse),
+            "raw_rmse": [float(x) for x in raw_rmse],
             "theta_rmse_deg": float(rmse[0] * 180.0 / np.pi),
             "x_rmse_cm": float(rmse[1] * 100.0),
             "y_rmse_cm": float(rmse[2] * 100.0),
@@ -130,7 +130,7 @@ def run_eval() -> Dict[str, float]:
     elif task == "push":
         rmse = raw_rmse * np.array([0.0572766, 0.06118315])
         results = {
-            "raw_rmse": list(raw_rmse),
+            "raw_rmse": [float(x) for x in raw_rmse],
             "x_rmse_cm": float(rmse[0] * 100.0),
             "y_rmse_cm": float(rmse[1] * 100.0),
         }
