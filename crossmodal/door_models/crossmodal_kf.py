@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 
 import diffbayes
 import diffbayes.types as types
@@ -17,7 +18,7 @@ from .kf import DoorKalmanFilter
 
 
 class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
-    def __init__(self):
+    def __init__(self, know_image_blackout = False):
         """Initializes a particle filter for our door task.
         """
 
@@ -26,7 +27,7 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
                     measurement_model=DoorKalmanFilterMeasurementModel(
-                        modalities={"image"}
+                        modalities={"image", "pos"}
                     ),
 
                 ),
@@ -41,26 +42,58 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
             state_dim=3,
         )
 
-class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
-    def __init__(self):
-        """Initializes a particle filter for our door task.
-        """
+        self.know_image_blackout = know_image_blackout
 
-        super().__init__(
-            dynamics_model=DoorDynamicsModel(),
-            measurement_model=CrossmodalKalmanFilterMeasurementModel(
-                measurement_models=[
-                    DoorKalmanFilterMeasurementModel(modalities={"image"}),
-                    DoorKalmanFilterMeasurementModel(modalities={"pos", "sensors"})
-                ],
-                crossmodal_weight_model=DoorCrossmodalKalmanFilterWeightModel(state_dim=3),
-                state_dim=3,
-            ),
-        )
+    def forward(
+            self, *, observations: types.ObservationsTorch,
+            controls: types.ControlsTorch,
+    ) -> types.StatesTorch:
+        N, _ = controls.shape
+        device = controls.device
 
+        if self.know_image_blackout:
+
+            blackout_indices = torch.sum(torch.abs(
+                observations['image'].reshape((N, -1))), dim=1) < 1e-8
+            if len(blackout_indices) == 0 or \
+                    np.sum(self._enabled_models) < len(self._enabled_models):
+                return self.super(observations=observations, controls=controls)
+
+            unimodal_states, unimodal_covariances = self.calculate_unimodal_states(observations,
+                                                                                   controls)
+            raw_state_weights = self.crossmodal_weight_model(observations=observations)
+            image_weight = raw_state_weights[0]
+            force_weight = raw_state_weights[1]
+
+            mask_shape = (N, 1)
+            mask = torch.ones(mask_shape, device=device)
+            mask[blackout_indices] = 0
+
+            image_beta_new = torch.zeros(mask_shape, device=device)
+            image_beta_new[blackout_indices] = 1e-9
+            image_weight = image_beta_new + mask * image_weight
+
+            force_beta_new = torch.zeros(mask_shape, device=device)
+            force_beta_new[blackout_indices] = 1. - 1e-9
+            force_weight = force_beta_new + mask * force_weight
+
+            state_weights = torch.stack([image_weight, force_weight])
+            assert state_weights.shape == (np.sum(self._enabled_models), N, self.state_dim)
+
+            weighted_states, weighted_covariances = self.calculate_weighted_states(state_weights,
+                                                                                   unimodal_states,
+                                                                                   unimodal_covariances)
+
+            self.weighted_covariances = weighted_covariances
+
+            return weighted_states
+
+        return self.super(observations=observations, controls=controls)
 
 class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
-    def __init__(self, units: int = 64, state_dim: int = 3):
+    def __init__(self, units: int = 64,
+                 state_dim: int = 3,
+                 know_image_blackout: bool = False,):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
 
@@ -106,3 +139,20 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         state_weights = state_weights / (torch.sum(state_weights, dim=0) + 1e-9)
 
         return state_weights
+
+class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
+    def __init__(self):
+        """Initializes a particle filter for our door task.
+        """
+
+        super().__init__(
+            dynamics_model=DoorDynamicsModel(),
+            measurement_model=CrossmodalKalmanFilterMeasurementModel(
+                measurement_models=[
+                    DoorKalmanFilterMeasurementModel(modalities={"image"}),
+                    DoorKalmanFilterMeasurementModel(modalities={"pos", "sensors"})
+                ],
+                crossmodal_weight_model=DoorCrossmodalKalmanFilterWeightModel(state_dim=3),
+                state_dim=3,
+            ),
+        )
