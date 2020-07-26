@@ -189,7 +189,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorKalmanFilter):
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
     #Pre-train measurement model
-    train_helpers.train_kf_measurement(epochs=5, batch_size=64)
+    train_helpers.train_kf_measurement(epochs=10, batch_size=64)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
 
