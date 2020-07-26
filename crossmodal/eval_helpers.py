@@ -29,17 +29,17 @@ def configure(
     globals()["task"] = task
 
 
-def log_eval() -> None:
+def log_eval(measurement_initialize=False) -> None:
     """Evaluate a filter, print out + log metrics to Tensorboard.
     """
-    results = run_eval()
+    results = run_eval(measurement_initialize)
     with buddy.log_scope("eval"):
         for key, value in results.items():
             if type(value) == float:
                 buddy.log_scalar(key, value)
 
 
-def run_eval() -> Dict[str, float]:
+def run_eval(measurement_initialize=False) -> Dict[str, float]:
     """Evaluate a filter, print out + return metrics.
     """
     assert isinstance(filter_model, diffbayes.base.Filter)
@@ -82,12 +82,16 @@ def run_eval() -> Dict[str, float]:
 
         # Initialize beliefs
         state_dim = filter_model.state_dim
-        cov = (torch.eye(state_dim, device=device) * 0.1)[None, :, :].expand(
-            (N, state_dim, state_dim)
-        )
-        filter_model.initialize_beliefs(
-            mean=states[0], covariance=cov,
-        )
+
+        if measurement_initialize and hasattr(filter_model, 'measurement_initialize_belief'):
+            filter_model.measurement_initialize_belief(fannypack.utils.SliceWrapper(observations)[0])
+        else:
+            cov = (torch.eye(state_dim, device=device) * 0.1)[None, :, :].expand(
+                (N, state_dim, state_dim)
+            )
+            filter_model.initialize_beliefs(
+                mean=states[0], covariance=cov,
+            )
 
         # Run filter
         predicted_states = filter_model.forward_loop(
