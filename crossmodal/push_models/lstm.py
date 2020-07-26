@@ -11,12 +11,12 @@ from . import layers
 
 
 class PushLSTMFilter(diffbayes.base.Filter):
-    def __init__(self, units: int = 64):
+    def __init__(self, units: int = 32): # 64 overfits?
         """Initializes an LSTM architecture for our door task.
         """
         super().__init__(state_dim=2)
 
-        self.lstm_hidden_dim = 32
+        self.lstm_hidden_dim = 4
         self.lstm_num_layers = 2
         self.units = units
 
