@@ -150,7 +150,7 @@ class CrossmodalKalmanFilter(
         weighted_states = weighted_average(unimodal_states, state_weights)
         covariance_weights = state_weights.unsqueeze(-1).repeat((1,1,1, self.state_dim))
         covariance_weights = covariance_weights * covariance_weights.transpose(-1,-2)
-        covariance_multiplier = torch.sum(covariance_weights * unimodal_covariances, 0) 
+        weighted_covariances = torch.sum(covariance_weights * unimodal_covariances, 0)
 
         return weighted_states, weighted_covariances
 
