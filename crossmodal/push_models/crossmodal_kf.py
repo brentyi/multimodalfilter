@@ -14,7 +14,7 @@ from . import layers
 from .dynamics import PushDynamicsModel
 from .kf import PushKalmanFilterMeasurementModel
 from .kf import PushKalmanFilter
-
+import numpy as np
 
 class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter):
     def __init__(self):
@@ -40,7 +40,52 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter):
             crossmodal_weight_model=PushCrossmodalKalmanFilterWeightModel(state_dim=2),
             state_dim=2,
         )
-
+    #
+    # def forward(
+    #         self, *, observations: types.ObservationsTorch,
+    #         controls: types.ControlsTorch,
+    # ) -> types.StatesTorch:
+    #     N, _ = controls.shape
+    #     device = controls.device
+    #
+    #     if self.know_image_blackout:
+    #
+    #         blackout_indices = torch.sum(torch.abs(
+    #             observations['image'].reshape((N, -1))), dim=1) < 1e-8
+    #         if len(blackout_indices) == 0 or \
+    #                 np.sum(self._enabled_models) < len(self._enabled_models):
+    #             return super.forward(observations=observations, controls=controls)
+    #
+    #         unimodal_states, unimodal_covariances = self.calculate_unimodal_states(observations,
+    #                                                                                controls)
+    #         raw_state_weights = self.crossmodal_weight_model(observations=observations)
+    #         image_weight = raw_state_weights[0]
+    #         force_weight = raw_state_weights[1]
+    #
+    #         mask_shape = (N, 1)
+    #         mask = torch.ones(mask_shape, device=device)
+    #         mask[blackout_indices] = 0
+    #
+    #         image_beta_new = torch.zeros(mask_shape, device=device)
+    #         image_beta_new[blackout_indices] = 1e-9
+    #         image_weight = image_beta_new + mask * image_weight
+    #
+    #         force_beta_new = torch.zeros(mask_shape, device=device)
+    #         force_beta_new[blackout_indices] = 1. - 1e-9
+    #         force_weight = force_beta_new + mask * force_weight
+    #
+    #         state_weights = torch.stack([image_weight, force_weight])
+    #         assert state_weights.shape == (np.sum(self._enabled_models), N, self.state_dim)
+    #
+    #         weighted_states, weighted_covariances = self.calculate_weighted_states(state_weights,
+    #                                                                                unimodal_states,
+    #                                                                                unimodal_covariances)
+    #
+    #         self.weighted_covariances = weighted_covariances
+    #
+    #         return weighted_states
+    #
+    #     return super.forward(observations=observations, controls=controls)
 
 class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
     def __init__(self, units: int = 64, state_dim: int = 2,
@@ -63,51 +108,6 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
 
         self.know_image_blackout = know_image_blackout
 
-    def forward(
-            self, *, observations: types.ObservationsTorch,
-            controls: types.ControlsTorch,
-    ) -> types.StatesTorch:
-        N, _ = controls.shape
-        device = controls.device
-
-        if self.know_image_blackout:
-
-            blackout_indices = torch.sum(torch.abs(
-                observations['image'].reshape((N, -1))), dim=1) < 1e-8
-            if len(blackout_indices) == 0 or \
-                    np.sum(self._enabled_models) < len(self._enabled_models):
-                return self.super(observations=observations, controls=controls)
-
-            unimodal_states, unimodal_covariances = self.calculate_unimodal_states(observations,
-                                                                                   controls)
-            raw_state_weights = self.crossmodal_weight_model(observations=observations)
-            image_weight = raw_state_weights[0]
-            force_weight = raw_state_weights[1]
-
-            mask_shape = (N, 1)
-            mask = torch.ones(mask_shape, device=device)
-            mask[blackout_indices] = 0
-
-            image_beta_new = torch.zeros(mask_shape, device=device)
-            image_beta_new[blackout_indices] = 1e-9
-            image_weight = image_beta_new + mask * image_weight
-
-            force_beta_new = torch.zeros(mask_shape, device=device)
-            force_beta_new[blackout_indices] = 1. - 1e-9
-            force_weight = force_beta_new + mask * force_weight
-
-            state_weights = torch.stack([image_weight, force_weight])
-            assert state_weights.shape == (np.sum(self._enabled_models), N, self.state_dim)
-
-            weighted_states, weighted_covariances = self.calculate_weighted_states(state_weights,
-                                                                                   unimodal_states,
-                                                                                   unimodal_covariances)
-
-            self.weighted_covariances = weighted_covariances
-
-            return weighted_states
-
-        return self.super(observations=observations, controls=controls)
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
         """Compute modality weights.
