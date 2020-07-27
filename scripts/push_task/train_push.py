@@ -160,6 +160,60 @@ elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalParticleFilte
         eval_helpers.log_eval()
     buddy.save_checkpoint("phase4")
 
+elif isinstance(filter_model, crossmodal.push_models.PushUnimodalParticleFilter):
+    # Pull out measurement model
+    assert isinstance(
+        filter_model.measurement_model, CrossmodalParticleFilterMeasurementModel
+    )
+    measurement_model: CrossmodalParticleFilterMeasurementModel = cast(
+        CrossmodalParticleFilterMeasurementModel, filter_model.measurement_model,
+    )
+
+    # Pre-train dynamics (single-step)
+    train_helpers.train_pf_dynamics_single_step(epochs=5)
+    buddy.save_checkpoint("phase0")
+
+    # Pre-train dynamics (recurrent)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
+    buddy.save_checkpoint("phase1")
+
+    # Freeze dynamics
+    fannypack.utils.freeze_module(filter_model.dynamics_model)
+
+    # Pre-train measurement model (image)
+    measurement_model.enabled_models = [True, False]
+    train_helpers.train_pf_measurement(epochs=3, batch_size=64)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    buddy.save_checkpoint("phase2")
+
+    # Pre-train measurement model (proprioception + haptics)
+    measurement_model.enabled_models = [False, True]
+    train_helpers.train_pf_measurement(epochs=3, batch_size=64)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=16, epochs=20, batch_size=32)
+    eval_helpers.log_eval()
+    buddy.save_checkpoint("phase3")
+
+    # Enable both measurement models
+    measurement_model.enabled_models = [True, True]
+
+    # Train everything end-to-end
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    for _ in range(4):
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+        eval_helpers.log_eval()
+    buddy.save_checkpoint("phase4")
+
 elif isinstance(filter_model, crossmodal.push_models.PushKalmanFilter):
     # Pre-train dynamics (single-step)
     train_helpers.train_pf_dynamics_single_step(epochs=10)

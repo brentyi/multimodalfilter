@@ -23,7 +23,7 @@ class PushCrossmodalParticleFilter(diffbayes.base.ParticleFilter):
             dynamics_model=PushDynamicsModel(),
             measurement_model=CrossmodalParticleFilterMeasurementModel(
                 measurement_models=[
-                    PushMeasurementModel(modalities={"pos", "image"}),
+                    PushMeasurementModel(modalities={"image"}),
                     PushMeasurementModel(modalities={"pos", "sensors"}),
                 ],
                 crossmodal_weight_model=PushCrossmodalWeightModel(),

@@ -11,7 +11,7 @@ from . import layers
 
 
 class DoorLSTMFilter(diffbayes.base.Filter):
-    def __init__(self, units: int = 32): # 64 overfits?
+    def __init__(self, units: int = 64):
         """Initializes an LSTM architecture for our door task.
         """
         super().__init__(state_dim=3)
