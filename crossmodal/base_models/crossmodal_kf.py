@@ -148,9 +148,9 @@ class CrossmodalKalmanFilter(
         assert state_dim == self.state_dim
 
         weighted_states = weighted_average(unimodal_states, state_weights)
-        covariance_multiplier = torch.prod(torch.prod(state_weights, dim=-1), dim=0).unsqueeze(-1).unsqueeze(-1)
-        assert covariance_multiplier.shape == (N, 1, 1)
-        weighted_covariances = covariance_multiplier * torch.sum(unimodal_covariances, dim=0)
+        covariance_weights = state_weights.unsqueeze(-1).repeat((1,1,1, self.state_dim))
+        covariance_weights = covariance_weights * covariance_weights.transpose(-1,-2)
+        covariance_multiplier = torch.sum(covariance_weights * unimodal_covariances, 0) 
 
         return weighted_states, weighted_covariances
 

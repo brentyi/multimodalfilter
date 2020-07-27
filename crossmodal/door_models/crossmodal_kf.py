@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import torch.nn.functional as F
+
 
 import diffbayes
 import diffbayes.types as types
@@ -27,7 +29,7 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
                     measurement_model=DoorKalmanFilterMeasurementModel(
-                        modalities={"image", "pos"}
+                        modalities={"image"}
                     ),
 
                 ),
@@ -46,27 +48,43 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
 
 
 class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
-    def __init__(self, units: int = 64,
-                 state_dim: int = 3,
-                 know_image_blackout: bool = False,):
+    def __init__(self, units: int = 64, state_dim: int = 2,
+                 know_image_blackout=False):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
+
+        weighting_types = ["sigmoid", "softmax", "absolute"]
 
         self.observation_image_layers = layers.observation_image_layers(units)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
+        self.weighting_type = "softmax"
 
+        assert self.weighting_type in weighting_types
+
+        if self.weighting_type == "sigmoid":
         # Initial fusion layers
-        self.fusion_layers = nn.Sequential(
-            nn.Linear(units * 3, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-            nn.Linear(units, modality_count*self.state_dim),
-            nn.Sigmoid(),
-        )
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(units * 3, units),
+                nn.ReLU(inplace=True),
+                resblocks.Linear(units),
+                nn.Linear(units, modality_count*self.state_dim),
+                nn.Sigmoid(),
+            )
+        else:
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(units * 3, units),
+                nn.ReLU(inplace=True),
+                resblocks.Linear(units),
+                nn.Linear(units, modality_count * self.state_dim),
+            )
+
+        self.know_image_blackout = know_image_blackout
+
+
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
-        """Compute log-modality weights.
+        """Compute modality weights.
 
         Args:
             observations (types.ObservationsTorch): Model observations.
@@ -91,9 +109,18 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
 
         state_weights = output.reshape(self.modality_count, N, self.state_dim)
 
-        state_weights = state_weights / (torch.sum(state_weights, dim=0) + 1e-9)
+        if self.weighting_type == "absolute":
+            state_weights = torch.abs(state_weights)
+        elif self.weighting_type == "softmax":
+            state_weights = F.softmax(
+                state_weights,
+                dim=0
+            )
+
+        state_weights = state_weights / (torch.sum((state_weights), dim=0) + 1e-9)
 
         return state_weights
+
 
 class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
     def __init__(self):

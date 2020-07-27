@@ -26,7 +26,7 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter):
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
                     measurement_model=PushKalmanFilterMeasurementModel(
-                        modalities={"image", "pos"}
+                        modalities={"image"}
                     ),
 
                 ),
@@ -93,20 +93,34 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
 
+        weighting_types = ["sigmoid", "softmax", "absolute"]
+
         self.observation_image_layers = layers.observation_image_layers(units)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
+        self.weighting_type = "softmax"
 
+        assert self.weighting_type in weighting_types
+
+        if self.weighting_type == "sigmoid":
         # Initial fusion layers
-        self.fusion_layers = nn.Sequential(
-            nn.Linear(units * 3, units),
-            nn.ReLU(inplace=True),
-            resblocks.Linear(units),
-            nn.Linear(units, modality_count*self.state_dim),
-            nn.Sigmoid(),
-        )
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(units * 3, units),
+                nn.ReLU(inplace=True),
+                resblocks.Linear(units),
+                nn.Linear(units, modality_count*self.state_dim),
+                nn.Sigmoid(),
+            )
+        else:
+            self.fusion_layers = nn.Sequential(
+                nn.Linear(units * 3, units),
+                nn.ReLU(inplace=True),
+                resblocks.Linear(units),
+                nn.Linear(units, modality_count * self.state_dim),
+            )
 
         self.know_image_blackout = know_image_blackout
+
 
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
@@ -134,8 +148,13 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         assert output.shape == (N, self.modality_count * self.state_dim)
 
         state_weights = output.reshape(self.modality_count, N, self.state_dim)
+        if self.weighting_type == "absolute":
+            state_weights = torch.abs(state_weights)
+        elif self.weighting_type == "softmax":
+            pass
 
-        state_weights = state_weights / (torch.sum(state_weights, dim=0) + 1e-9)
+
+        state_weights = state_weights / (torch.sum((state_weights), dim=0) + 1e-9)
 
         return state_weights
 

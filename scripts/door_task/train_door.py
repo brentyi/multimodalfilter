@@ -276,7 +276,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     fannypack.utils.unfreeze_module(filter_model.filter_models)
 
     train_helpers.train_e2e(subsequence_length=3, epochs=5,
-                            batch_size=32, measurement_initialize=True)
+                            batch_size=32, measurement_initialize=False)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length3")
 
@@ -284,13 +284,13 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
 
     for _ in range(3):
         train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,
-                                measurement_initialize=True)
+                                measurement_initialize=False)
         eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length4")
 
     for _ in range(2):
         train_helpers.train_e2e(subsequence_length=6, epochs=5, batch_size=32,
-                                measurement_initialize=True)
+                                measurement_initialize=False)
         eval_helpers.log_eval()
         print("kalman e2e")
 
