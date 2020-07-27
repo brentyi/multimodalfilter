@@ -1,5 +1,5 @@
 import abc
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import torch
@@ -36,13 +36,16 @@ class CrossmodalParticleFilterMeasurementModel(
     diffbayes.base.ParticleFilterMeasurementModel
 ):
     """Utility class for merging unimodal measurement models via crossmodal weighting.
+
+    If no crossmodal weight model is specified, we weight all measurement model outputs
+    equally.
     """
 
     def __init__(
         self,
         *,
         measurement_models: List[diffbayes.base.ParticleFilterMeasurementModel],
-        crossmodal_weight_model: CrossmodalWeightModel,
+        crossmodal_weight_model: Optional[CrossmodalWeightModel],
         state_dim: int,
     ):
         super().__init__(state_dim=state_dim)
@@ -51,8 +54,8 @@ class CrossmodalParticleFilterMeasurementModel(
         """ nn.ModuleList: List of measurement models. """
 
         self.crossmodal_weight_model = crossmodal_weight_model
-        """ crossmodal.base_models.CrossmodalParticleFilterWeightModel: Crossmodal
-        weight model; should output one weight per measurement model. """
+        """ Optional[crossmodal.base_models.CrossmodalParticleFilterWeightModel]:
+        Crossmodal weight model; should output one weight per measurement model. """
 
         self._enabled_models: List[bool] = [True for _ in self.measurement_models]
 
@@ -113,15 +116,20 @@ class CrossmodalParticleFilterMeasurementModel(
         assert unimodal_log_likelihoods.shape == (N, M, np.sum(self._enabled_models))
 
         # Compute modality-specific weights
-        modality_log_weights = self.crossmodal_weight_model(observations=observations)[
-            :, self._enabled_models
-        ]
-        assert modality_log_weights.shape == (N, np.sum(self._enabled_models))
+        if self.crossmodal_weight_model is not None:
+            modality_log_weights = self.crossmodal_weight_model(
+                observations=observations
+            )[:, self._enabled_models]
+            assert modality_log_weights.shape == (N, np.sum(self._enabled_models))
 
-        # Weight particle likelihoods by modality & return
-        particle_log_likelihoods = torch.logsumexp(
-            modality_log_weights[:, None, :] + unimodal_log_likelihoods, dim=2
-        )
-        assert particle_log_likelihoods.shape == (N, M)
+            # Weight particle likelihoods by modality & return
+            particle_log_likelihoods = torch.logsumexp(
+                modality_log_weights[:, None, :] + unimodal_log_likelihoods, dim=2
+            )
+            assert particle_log_likelihoods.shape == (N, M)
+        else:
+            # Weight particle likelihoods by modality & return
+            particle_log_likelihoods = torch.logsumexp(unimodal_log_likelihoods, dim=2)
+            assert particle_log_likelihoods.shape == (N, M)
 
         return particle_log_likelihoods
