@@ -64,11 +64,11 @@ if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
     buddy.save_checkpoint("phase0")
 
     # Train on longer sequences
-    # train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
-    # eval_helpers.log_eval()
-    # train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
-    # eval_helpers.log_eval()
-    train_helpers.train_e2e(subsequence_length=16, epochs=30, batch_size=32)
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=16, epochs=15, batch_size=32)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase1")
 
