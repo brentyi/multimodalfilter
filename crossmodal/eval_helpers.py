@@ -28,7 +28,7 @@ def configure(
     globals()["buddy"] = buddy
     globals()["filter_model"] = cast(diffbayes.base.Filter, buddy.model)
     globals()["trajectories"] = trajectories
-    globals()["task"] = tasks.Task
+    globals()["task"] = task
 
 
 def log_eval(measurement_initialize=False) -> None:
