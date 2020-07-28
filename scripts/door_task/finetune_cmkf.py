@@ -51,12 +51,12 @@ else:
 if args.unimodal:
     # going from crossmodal to unimodal models, loading just the filter models
 
-    filter_model: diffbayes.base.Filter = crossmodal.door_models.DoorUnimodalKalmanFilter
+    filter_model: diffbayes.base.Filter = crossmodal.door_models.DoorUnimodalKalmanFilter()
     buddy.attach_model(filter_model)
     buddy.load_checkpoint_module(
         source="filter_models",
         target="filter_models",
-        label="phase1",
+        label=args.checkpoint_label,
         experiment_name=args.original_experiment
     )
 else:
@@ -84,31 +84,33 @@ eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task="door")
 if isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter):
     image_model = filter_model.filter_models[0]
     force_model = filter_model.filter_models[1]
-    # # Pre-train kalman filter (image)
-    # filter_model.enabled_models = [True, False]
-    # train_helpers.train_e2e(subsequence_length=4, epochs=3, batch_size=32,
-    #                         optimizer_name="image_ekf")
-    # eval_helpers.log_eval()
-    # train_helpers.train_e2e(subsequence_length=8, epochs=3, batch_size=32,
-    #                         optimizer_name="image_ekf")
-    # eval_helpers.log_eval()
-    # train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32,
-    #                         optimizer_name="image_ekf")
-    # eval_helpers.log_eval()
-    # buddy.save_checkpoint("phase3-image")
-    #
-    # # Pre-train kalman filter (proprioception + haptics)
-    # filter_model.enabled_models = [False, True]
-    # train_helpers.train_e2e(subsequence_length=4, epochs=3, batch_size=32,
-    #                         optimizer_name="force_ekf")
-    # eval_helpers.log_eval()
-    # train_helpers.train_e2e(subsequence_length=8, epochs=3, batch_size=32,
-    #                         optimizer_name="force_ekf")
-    # eval_helpers.log_eval()
-    # train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32,
-    #                         optimizer_name="force_ekf")
-    # eval_helpers.log_eval()
-    # buddy.save_checkpoint("phase3-force")
+
+    if args.checkpoint_label == "phase2":
+        # Pre-train kalman filter (image)
+        filter_model.enabled_models = [True, False]
+        train_helpers.train_e2e(subsequence_length=4, epochs=3, batch_size=32,
+                                optimizer_name="image_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=8, epochs=3, batch_size=32,
+                                optimizer_name="image_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32,
+                                optimizer_name="image_ekf")
+        eval_helpers.log_eval()
+        buddy.save_checkpoint("phase3-image")
+
+        # Pre-train kalman filter (proprioception + haptics)
+        filter_model.enabled_models = [False, True]
+        train_helpers.train_e2e(subsequence_length=4, epochs=3, batch_size=32,
+                                optimizer_name="force_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=8, epochs=3, batch_size=32,
+                                optimizer_name="force_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32,
+                                optimizer_name="force_ekf")
+        eval_helpers.log_eval()
+        buddy.save_checkpoint("phase3-force")
     # Enable both filter models
     filter_model.enabled_models = [True, True]
 
@@ -145,6 +147,34 @@ if isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter):
 
 
 elif isinstance(filter_model, crossmodal.door_models.DoorUnimodalKalmanFilter):
+
+    if args.checkpoint_label == "phase2":
+        # Pre-train kalman filter (image)
+        filter_model.enabled_models = [True, False]
+        train_helpers.train_e2e(subsequence_length=4, epochs=3, batch_size=32,
+                                optimizer_name="image_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=8, epochs=3, batch_size=32,
+                                optimizer_name="image_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32,
+                                optimizer_name="image_ekf")
+        eval_helpers.log_eval()
+        buddy.save_checkpoint("phase3-image")
+
+        # Pre-train kalman filter (proprioception + haptics)
+        filter_model.enabled_models = [False, True]
+        train_helpers.train_e2e(subsequence_length=4, epochs=3, batch_size=32,
+                                optimizer_name="force_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=8, epochs=3, batch_size=32,
+                                optimizer_name="force_ekf")
+        eval_helpers.log_eval()
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32,
+                                optimizer_name="force_ekf")
+        eval_helpers.log_eval()
+        buddy.save_checkpoint("phase3-force")
+
     filter_model.enabled_models = [True, True]
 
     # Train everything end-to-end

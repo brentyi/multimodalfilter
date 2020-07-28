@@ -24,7 +24,7 @@ class PushUnimodalKalmanFilter(UnimodalKalmanFilter):
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
                     measurement_model=PushKalmanFilterMeasurementModel(
-                        modalities={"image", "pos"}
+                        modalities={"image"}
                     ),
 
                 ),

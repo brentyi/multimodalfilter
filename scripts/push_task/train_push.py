@@ -230,13 +230,13 @@ elif isinstance(filter_model, crossmodal.push_models.PushKalmanFilter):
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
     # Pre-train measurement model
-    buddy.set_learning_rate(value=0.0001, optimizer_name="train_measurement")
+    # buddy.set_learning_rate(value=0.001, optimizer_name="train_measurement")
     train_helpers.train_kf_measurement(epochs=10, batch_size=32)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
 
     # Train E2E
-    buddy.set_learning_rate(value=5e-6, optimizer_name="train_filter_recurrent")
+    # buddy.set_learning_rate(value=5e-6, optimizer_name="train_filter_recurrent")
     train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,
                             measurement_initialize=True)
     eval_helpers.log_eval()

@@ -25,7 +25,7 @@ class DoorUnimodalKalmanFilter(UnimodalKalmanFilter):
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
                     measurement_model=DoorKalmanFilterMeasurementModel(
-                        modalities={"image", "pos"}
+                        modalities={"image"}
                     ),
 
                 ),
