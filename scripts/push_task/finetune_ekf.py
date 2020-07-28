@@ -170,7 +170,7 @@ elif isinstance(filter_model, crossmodal.push_models.PushKalmanFilter):
         eval_helpers.log_eval()
     buddy.save_checkpoint("finetune-done")
 
-elif isinstance(filter_model, crossmodal.psuh_models.PushUnimodalKalmanFilter):
+elif isinstance(filter_model, crossmodal.push_models.PushUnimodalKalmanFilter):
     if args.checkpoint_label == "phase2":
         # Pre-train kalman filter (image)
         filter_model.enabled_models = [True, False]
