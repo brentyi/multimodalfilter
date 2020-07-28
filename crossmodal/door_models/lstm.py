@@ -17,7 +17,7 @@ class DoorLSTMFilter(diffbayes.base.Filter, DoorTask.Filter):
         """
         super().__init__(state_dim=3)
 
-        self.lstm_hidden_dim = 4
+        self.lstm_hidden_dim = 512
         self.lstm_num_layers = 2
         self.units = units
 

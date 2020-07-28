@@ -71,7 +71,7 @@ class DoorTask(Task):
         )
 
 
-def load_trajectories(
+def _load_trajectories(
     *input_files,
     use_vision: bool = True,
     use_proprioception: bool = True,
