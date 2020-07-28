@@ -13,7 +13,7 @@ from . import layers
 
 class PushLSTMFilter(diffbayes.base.Filter, PushTask.Filter):
     def __init__(self, units: int = 32):
-        # def __init__(self, units: int = 64):
+    # def __init__(self, units: int = 64): # <== push task is unhappy w/ 64 units
         """Initializes an LSTM architecture for our door task.
         """
         super().__init__(state_dim=2)

@@ -56,16 +56,18 @@ eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
 # Run model-specific training curriculum
 if isinstance(filter_model, crossmodal.push_models.PushLSTMFilter):
     # Pre-train for single-step prediction
-    train_helpers.train_e2e(subsequence_length=2, epochs=5, batch_size=32)
-    buddy.save_checkpoint("phase0")
+    # train_helpers.train_e2e(subsequence_length=2, epochs=5, batch_size=32)
+    # buddy.save_checkpoint("phase0")
 
     # Train on longer sequences
-    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
-    eval_helpers.log_eval()
-    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
-    eval_helpers.log_eval()
-    train_helpers.train_e2e(subsequence_length=16, epochs=15, batch_size=32)
-    eval_helpers.log_eval()
+    # train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    # eval_helpers.log_eval()
+    # train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    # eval_helpers.log_eval()
+    # eval_helpers.log_eval()
+    for _ in range(25):
+        train_helpers.train_e2e(subsequence_length=16, epochs=1, batch_size=32)
+        eval_helpers.log_eval()
     buddy.save_checkpoint("phase1")
 
 elif isinstance(filter_model, crossmodal.push_models.PushParticleFilter):
