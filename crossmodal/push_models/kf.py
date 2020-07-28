@@ -41,7 +41,7 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         super().__init__(state_dim=2, noise_R_tril=noise_R_tril)
 
         valid_modalities = {"image", "pos", "sensors"}
-        assert len(valid_modalities | modalities) == 3, "Receivedi invalid modality"
+        assert len(valid_modalities | modalities) == 3, "Received invalid modality"
         assert len(modalities) > 0, "Received empty modality list"
         self.modalities = modalities
 

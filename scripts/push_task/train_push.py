@@ -234,16 +234,16 @@ elif isinstance(filter_model, crossmodal.push_models.PushKalmanFilter):
     # Train E2E
     # buddy.set_learning_rate(value=5e-6, optimizer_name="train_filter_recurrent")
     train_helpers.train_e2e(
-        subsequence_length=4, epochs=5, batch_size=32, measurement_initialize=True
+        subsequence_length=4, epochs=5, batch_size=32, measurement_initialize=False
     )
     eval_helpers.log_eval()
     train_helpers.train_e2e(
-        subsequence_length=8, epochs=5, batch_size=32, measurement_initialize=True
+        subsequence_length=8, epochs=5, batch_size=32, measurement_initialize=False
     )
     eval_helpers.log_eval()
     for _ in range(4):
         train_helpers.train_e2e(
-            subsequence_length=16, epochs=5, batch_size=32, measurement_initialize=True
+            subsequence_length=16, epochs=5, batch_size=32, measurement_initialize=False
         )
         eval_helpers.log_eval()
     buddy.save_checkpoint("phase3")

@@ -189,7 +189,7 @@ class CrossmodalKalmanFilter(
         for model in self.filter_models:
             model.initialize_beliefs(mean=mean, covariance=covariance)
 
-    def measurement_initialize_belief(self, observations):
+    def measurement_initialize_beliefs(self, observations):
         N = observations[[*observations][0]].shape[0]
 
         model_list = [

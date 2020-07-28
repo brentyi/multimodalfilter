@@ -15,12 +15,17 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--experiment-name", type=str)
 parser.add_argument("--checkpoint-label", type=str, default=None)
 parser.add_argument("--save", action="store_true")
+parser.add_argument("--measurement_init", action="store_true")
+
+Task.add_dataset_arguments(parser)
+
 args = parser.parse_args()
+dataset_args = Task.get_dataset_args(args)
 
 # Create Buddy and read experiment metadata
 buddy = fannypack.utils.Buddy(args.experiment_name)
 model_type = buddy.metadata["model_type"]
-dataset_args = buddy.metadata["dataset_args"]
+# dataset_args = buddy.metadata["dataset_args"]
 
 # Load model using experiment metadata
 filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
@@ -33,7 +38,7 @@ eval_trajectories = Task.get_eval_trajectories(**dataset_args)
 # Run eval
 eval_helpers = crossmodal.eval_helpers
 eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
-eval_results = eval_helpers.run_eval()
+eval_results = eval_helpers.run_eval(measurement_initialize=args.measurement_init)
 
 # Save eval results
 if args.save:

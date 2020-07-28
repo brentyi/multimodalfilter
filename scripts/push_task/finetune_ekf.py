@@ -20,6 +20,8 @@ parser.add_argument("--experiment-name", type=str)
 parser.add_argument("--checkpoint-label", type=str, default=None)
 parser.add_argument("--save", action="store_true")
 parser.add_argument("--original-experiment", type=str, default=None)
+parser.add_argument("--unimodal", action="store_true")
+
 Task.add_dataset_arguments(parser)
 # Parse args
 args = parser.parse_args()
@@ -50,7 +52,7 @@ else:
 if args.unimodal:
     # going from crossmodal to unimodal models, loading just the filter models
 
-    filter_model: diffbayes.base.Filter = crossmodal.door_models.DoorUnimodalKalmanFilter()
+    filter_model: diffbayes.base.Filter = crossmodal.push_models.PushUnimodalKalmanFilter()
     buddy.attach_model(filter_model)
     buddy.load_checkpoint_module(
         source="filter_models",
@@ -60,7 +62,7 @@ if args.unimodal:
     )
 else:
     # Load model using experiment metadata
-    filter_model: diffbayes.base.Filter = crossmodal.door_models.model_types[model_type]()
+    filter_model: diffbayes.base.Filter = crossmodal.push_models.model_types[model_type]()
     buddy.attach_model(filter_model)
     buddy.load_checkpoint(label=args.checkpoint_label, experiment_name=args.original_experiment)
 
@@ -232,4 +234,4 @@ else:
 
 # Eval model when done
 eval_results = crossmodal.eval_helpers.run_eval()
-buddy.add_metadata({"eval_results":eval_results})
+buddy.add_metadata({"eval_results": eval_results})

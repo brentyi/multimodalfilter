@@ -86,12 +86,14 @@ def run_eval(measurement_initialize=False) -> Dict[str, float]:
         state_dim = filter_model.state_dim
 
         if measurement_initialize and hasattr(
-            filter_model, "measurement_initialize_belief"
+            filter_model, "measurement_initialize_beliefs"
         ):
-            filter_model.measurement_initialize_belief(
-                fannypack.utils.SliceWrapper(observations)[0]
+            print("initialize with measurement")
+            filter_model.measurement_initialize_beliefs(
+                observations=fannypack.utils.SliceWrapper(observations)[0]
             )
         else:
+            print("init with random")
             cov = (torch.eye(state_dim, device=device) * 0.1)[None, :, :].expand(
                 (N, state_dim, state_dim)
             )
