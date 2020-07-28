@@ -1,8 +1,7 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 import torch.nn.functional as F
-
 
 import diffbayes
 import diffbayes.types as types
@@ -13,32 +12,31 @@ from ..base_models import (
     CrossmodalKalmanFilterMeasurementModel,
     CrossmodalKalmanFilterWeightModel,
 )
+from ..tasks import DoorTask
 from . import layers
 from .dynamics import DoorDynamicsModel
-from .kf import DoorKalmanFilterMeasurementModel
-from .kf import DoorKalmanFilter
+from .kf import DoorKalmanFilter, DoorKalmanFilterMeasurementModel
 
 
-class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
+class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter, DoorTask.Filter):
     def __init__(self, know_image_blackout=False):
         """Initializes a particle filter for our door task.
         """
 
         super().__init__(
-            filter_models= [
+            filter_models=[
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
                     measurement_model=DoorKalmanFilterMeasurementModel(
                         modalities={"image"}
                     ),
-
                 ),
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
                     measurement_model=DoorKalmanFilterMeasurementModel(
                         modalities={"pos", "sensors"}
                     ),
-                )
+                ),
             ],
             crossmodal_weight_model=DoorCrossmodalKalmanFilterWeightModel(state_dim=3),
             state_dim=3,
@@ -48,8 +46,7 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter):
 
 
 class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
-    def __init__(self, units: int = 64, state_dim: int = 2,
-                 know_image_blackout=False):
+    def __init__(self, units: int = 64, state_dim: int = 2, know_image_blackout=False):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
 
@@ -63,12 +60,12 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         assert self.weighting_type in weighting_types
 
         if self.weighting_type == "sigmoid":
-        # Initial fusion layers
+            # Initial fusion layers
             self.fusion_layers = nn.Sequential(
                 nn.Linear(units * 3, units),
                 nn.ReLU(inplace=True),
                 resblocks.Linear(units),
-                nn.Linear(units, modality_count*self.state_dim),
+                nn.Linear(units, modality_count * self.state_dim),
                 nn.Sigmoid(),
             )
         else:
@@ -80,8 +77,6 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
             )
 
         self.know_image_blackout = know_image_blackout
-
-
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
         """Compute modality weights.
@@ -112,10 +107,7 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         if self.weighting_type == "absolute":
             state_weights = torch.abs(state_weights)
         elif self.weighting_type == "softmax":
-            state_weights = F.softmax(
-                state_weights,
-                dim=0
-            )
+            state_weights = F.softmax(state_weights, dim=0)
 
         state_weights = state_weights / (torch.sum((state_weights), dim=0) + 1e-9)
 
@@ -132,9 +124,11 @@ class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
             measurement_model=CrossmodalKalmanFilterMeasurementModel(
                 measurement_models=[
                     DoorKalmanFilterMeasurementModel(modalities={"image"}),
-                    DoorKalmanFilterMeasurementModel(modalities={"pos", "sensors"})
+                    DoorKalmanFilterMeasurementModel(modalities={"pos", "sensors"}),
                 ],
-                crossmodal_weight_model=DoorCrossmodalKalmanFilterWeightModel(state_dim=3),
+                crossmodal_weight_model=DoorCrossmodalKalmanFilterWeightModel(
+                    state_dim=3
+                ),
                 state_dim=3,
             ),
         )

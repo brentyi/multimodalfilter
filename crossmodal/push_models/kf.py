@@ -7,11 +7,12 @@ import diffbayes
 import diffbayes.types as types
 from fannypack.nn import resblocks
 
+from ..tasks import PushTask
 from . import layers
 from .dynamics import PushDynamicsModel
 
 
-class PushKalmanFilter(diffbayes.base.KalmanFilter):
+class PushKalmanFilter(diffbayes.base.KalmanFilter, PushTask.Filter):
     def __init__(self, dynamics_model=None, measurement_model=None):
         """Initializes a particle filter for our door task.
         """
@@ -22,16 +23,17 @@ class PushKalmanFilter(diffbayes.base.KalmanFilter):
             )
         else:
             super().__init__(
-                dynamics_model=dynamics_model,
-                measurement_model=measurement_model,
+                dynamics_model=dynamics_model, measurement_model=measurement_model,
             )
+
 
 class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementModel):
     def __init__(
-        self, units: int = 64,
+        self,
+        units: int = 64,
         modalities: Set[str] = {"image", "pos", "sensors"},
-        add_R_noise: float=1e-6,
-        noise_R_tril: torch.Tensor = None
+        add_R_noise: float = 1e-6,
+        noise_R_tril: torch.Tensor = None,
     ):
         """Initializes a measurement model for our door task.
         """
@@ -44,8 +46,9 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         self.modalities = modalities
 
         if "image" in modalities:
-            self.observation_image_layers = layers.observation_image_layers(units,
-                                            spanning_avg_pool=True)
+            self.observation_image_layers = layers.observation_image_layers(
+                units, spanning_avg_pool=True
+            )
         if "pos" in modalities:
             self.observation_pos_layers = layers.observation_pos_layers(units)
         if "sensors" in modalities:
@@ -62,27 +65,21 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         self.r_layer = nn.Sequential(
             nn.Linear(units, self.state_dim),
             nn.ReLU(inplace=True),
-            resblocks.Linear(
-                self.state_dim),
+            resblocks.Linear(self.state_dim),
             nn.Linear(self.state_dim, self.state_dim),
-
         )
 
         self.z_layer = nn.Sequential(
             nn.Linear(units, self.state_dim),
             nn.ReLU(inplace=True),
-            resblocks.Linear(
-                self.state_dim),
+            resblocks.Linear(self.state_dim),
             nn.Linear(self.state_dim, self.state_dim),
-
         )
 
         self.units = units
         self.add_R_noise = torch.ones(self.state_dim) * add_R_noise
 
-    def forward(
-        self, *, observations: types.ObservationsTorch
-    ) -> types.StatesTorch:
+    def forward(self, *, observations: types.ObservationsTorch) -> types.StatesTorch:
         assert type(observations) == dict
         observations = cast(types.TorchDict, observations)
 
@@ -106,12 +103,12 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
 
         shared_features = self.shared_layers(observation_features)
 
-        shared_features_z = shared_features[:, :self.units].clone()
+        shared_features_z = shared_features[:, : self.units].clone()
         measurement_prediction = self.z_layer(shared_features_z)
         assert measurement_prediction.shape == (N, self.state_dim)
 
         if self.noise_R_tril is None:
-            lt_hat = self.r_layer(shared_features[:, self.units:].clone())
+            lt_hat = self.r_layer(shared_features[:, self.units :].clone())
 
         else:
             lt_hat = self.noise_R_tril
@@ -121,6 +118,8 @@ class PushKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
 
         measurement_covariance = lt ** 2
         if self.add_R_noise[0] > 0:
-            measurement_covariance += torch.diag(self.add_R_noise).to(measurement_covariance.device)
+            measurement_covariance += torch.diag(self.add_R_noise).to(
+                measurement_covariance.device
+            )
 
         return measurement_prediction, measurement_covariance

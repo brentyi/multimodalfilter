@@ -1,11 +1,12 @@
 import diffbayes
 
 from ..base_models import CrossmodalParticleFilterMeasurementModel
+from ..tasks import PushTask
 from .dynamics import PushDynamicsModel
 from .pf import PushMeasurementModel
 
 
-class PushUnimodalParticleFilter(diffbayes.base.ParticleFilter):
+class PushUnimodalParticleFilter(diffbayes.base.ParticleFilter, PushTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """

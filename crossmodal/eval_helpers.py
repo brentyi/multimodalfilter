@@ -1,4 +1,4 @@
-from typing import Dict, List, cast
+from typing import Dict, List, Type, cast
 
 import numpy as np
 import torch
@@ -6,27 +6,29 @@ import torch
 import diffbayes
 import fannypack
 
+from . import tasks
+
 # These need to externally set before eval
 buddy: fannypack.utils.Buddy
 filter_model: diffbayes.base.Filter
 trajectories: List[diffbayes.types.TrajectoryTupleNumpy]
-task: str
+task: Type[tasks.Task]
 
 
 def configure(
     *,
     buddy: fannypack.utils.Buddy,
     trajectories: List[diffbayes.types.TrajectoryTupleNumpy],
-    task: str,
+    task: Type[tasks.Task],
 ):
     """Configure global settings for eval helpers.
     """
-    assert task in ("door", "push")
+    assert issubclass(task, tasks.Task)
     assert isinstance(buddy.model, diffbayes.base.Filter)
     globals()["buddy"] = buddy
     globals()["filter_model"] = cast(diffbayes.base.Filter, buddy.model)
     globals()["trajectories"] = trajectories
-    globals()["task"] = task
+    globals()["task"] = tasks.Task
 
 
 def log_eval(measurement_initialize=False) -> None:
@@ -83,8 +85,12 @@ def run_eval(measurement_initialize=False) -> Dict[str, float]:
         # Initialize beliefs
         state_dim = filter_model.state_dim
 
-        if measurement_initialize and hasattr(filter_model, 'measurement_initialize_belief'):
-            filter_model.measurement_initialize_belief(fannypack.utils.SliceWrapper(observations)[0])
+        if measurement_initialize and hasattr(
+            filter_model, "measurement_initialize_belief"
+        ):
+            filter_model.measurement_initialize_belief(
+                fannypack.utils.SliceWrapper(observations)[0]
+            )
         else:
             cov = (torch.eye(state_dim, device=device) * 0.1)[None, :, :].expand(
                 (N, state_dim, state_dim)
@@ -115,7 +121,7 @@ def run_eval(measurement_initialize=False) -> Dict[str, float]:
         )
     raw_rmse = np.sqrt(mse / len(trajectories))
 
-    if task == "door":
+    if task == tasks.DoorTask:
         rmse = raw_rmse * np.array([0.39479038, 0.05650279, 0.0565098])
         results = {
             "raw_rmse": [float(x) for x in raw_rmse],
@@ -131,7 +137,7 @@ def run_eval(measurement_initialize=False) -> Dict[str, float]:
         print(f"X RMSE:     {results['x_rmse_cm']:.8f} cm")
         print(f"Y RMSE:     {results['y_rmse_cm']:.8f} cm")
         print("-----")
-    elif task == "push":
+    elif task == tasks.PushTask:
         rmse = raw_rmse * np.array([0.0572766, 0.06118315])
         results = {
             "raw_rmse": [float(x) for x in raw_rmse],
