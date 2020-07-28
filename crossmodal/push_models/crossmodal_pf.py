@@ -9,12 +9,13 @@ from ..base_models import (
     CrossmodalParticleFilterMeasurementModel,
     CrossmodalWeightModel,
 )
+from ..tasks import PushTask
 from . import layers
 from .dynamics import PushDynamicsModel
 from .pf import PushMeasurementModel
 
 
-class PushCrossmodalParticleFilter(diffbayes.base.ParticleFilter):
+class PushCrossmodalParticleFilter(diffbayes.base.ParticleFilter, PushTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """

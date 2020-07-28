@@ -1,11 +1,14 @@
 import argparse
 import dataclasses
+import datetime
 from typing import cast
 
 import crossmodal
 import diffbayes
 import fannypack
 from crossmodal.base_models import CrossmodalParticleFilterMeasurementModel
+
+Task = crossmodal.tasks.PushTask
 
 # Move cache in case we're running on NFS (eg Juno), open PDB on quit
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
@@ -24,28 +27,24 @@ model_type = buddy.metadata["model_type"]
 dataset_args = buddy.metadata["dataset_args"]
 
 # Load model using experiment metadata
-filter_model: diffbayes.base.Filter = crossmodal.push_models.model_types[model_type]()
+filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
 buddy.attach_model(filter_model)
 buddy.load_checkpoint(experiment_name=args.experiment_name, label=args.checkpoint_label)
 
 # Load trajectories into memory
-train_trajectories = crossmodal.push_data.load_trajectories(
-    "panda_push_pull_100.hdf5", "panda_push_push_100.hdf5", **dataset_args
-)
-eval_trajectories = crossmodal.push_data.load_trajectories(
-    "panda_push_pull_10.hdf5", "panda_push_push_10.hdf5", **dataset_args
-)
+train_trajectories = Task.get_train_trajectories(**dataset_args)
+eval_trajectories = Task.get_eval_trajectories(**dataset_args)
 
 # Configure helpers
 train_helpers = crossmodal.train_helpers
 train_helpers.configure(buddy=buddy, trajectories=train_trajectories)
 
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task="push")
+eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
 
 # Add training start time
 buddy.add_metadata(
-    {"finetune_end_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),}
+    {"finetune_start_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),}
 )
 
 # Run model-specific training curriculum

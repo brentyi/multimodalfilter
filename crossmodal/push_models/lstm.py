@@ -7,17 +7,18 @@ import diffbayes
 import diffbayes.types as types
 from fannypack.nn import resblocks
 
+from ..tasks import PushTask
 from . import layers
 
 
-class PushLSTMFilter(diffbayes.base.Filter):
-    def __init__(self, units: int = 32):
-    # def __init__(self, units: int = 64):
+class PushLSTMFilter(diffbayes.base.Filter, PushTask.Filter):
+    # def __init__(self, units: int = 32):
+    def __init__(self, units: int = 64): # <== push task is unhappy w/ 64 units
         """Initializes an LSTM architecture for our door task.
         """
         super().__init__(state_dim=2)
 
-        self.lstm_hidden_dim = 4
+        self.lstm_hidden_dim = 512
         self.lstm_num_layers = 2
         self.units = units
 

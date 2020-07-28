@@ -9,12 +9,13 @@ from ..base_models import (
     CrossmodalParticleFilterMeasurementModel,
     CrossmodalWeightModel,
 )
+from ..tasks import DoorTask
 from . import layers
 from .dynamics import DoorDynamicsModel
 from .pf import DoorMeasurementModel
 
 
-class DoorCrossmodalParticleFilter(diffbayes.base.ParticleFilter):
+class DoorCrossmodalParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """
