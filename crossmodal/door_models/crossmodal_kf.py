@@ -58,7 +58,7 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         self.observation_image_layers = layers.observation_image_layers(units)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
-        self.weighting_type = "softmax"
+        self.weighting_type = "sigmoid"
 
         assert self.weighting_type in weighting_types
 

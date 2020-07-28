@@ -15,6 +15,7 @@ from .dynamics import PushDynamicsModel
 from .kf import PushKalmanFilterMeasurementModel
 from .kf import PushKalmanFilter
 import numpy as np
+import torch.nn.functional as F
 
 class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter):
     def __init__(self):
@@ -98,17 +99,17 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         self.observation_image_layers = layers.observation_image_layers(units)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
-        self.weighting_type = "softmax"
+        self.weighting_type = "sigmoid"
 
         assert self.weighting_type in weighting_types
 
         if self.weighting_type == "sigmoid":
-        # Initial fusion layers
+            # Initial fusion layers
             self.fusion_layers = nn.Sequential(
                 nn.Linear(units * 3, units),
                 nn.ReLU(inplace=True),
                 resblocks.Linear(units),
-                nn.Linear(units, modality_count*self.state_dim),
+                nn.Linear(units, modality_count * self.state_dim),
                 nn.Sigmoid(),
             )
         else:
@@ -120,8 +121,6 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
             )
 
         self.know_image_blackout = know_image_blackout
-
-
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
         """Compute modality weights.
@@ -148,11 +147,14 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         assert output.shape == (N, self.modality_count * self.state_dim)
 
         state_weights = output.reshape(self.modality_count, N, self.state_dim)
+
         if self.weighting_type == "absolute":
             state_weights = torch.abs(state_weights)
         elif self.weighting_type == "softmax":
-            pass
-
+            state_weights = F.softmax(
+                state_weights,
+                dim=0
+            )
 
         state_weights = state_weights / (torch.sum((state_weights), dim=0) + 1e-9)
 
