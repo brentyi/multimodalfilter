@@ -11,27 +11,26 @@ from crossmodal.base_models import (
     UnimodalKalmanFilterMeasurementModel,
 )
 
-# Index of trainable models
-model_types = crossmodal.door_models.model_types
+Task = crossmodal.tasks.DoorTask
 
 # Parse args
 parser = argparse.ArgumentParser()
-parser.add_argument("--model-type", type=str, required=True, choices=model_types.keys())
+parser.add_argument("--model-type", type=str, required=True, choices=Task.model_types.keys())
 parser.add_argument("--experiment-name", type=str, required=True)
 parser.add_argument("--notes", type=str, default="(none)")
-crossmodal.door_data.add_dataset_arguments(parser)
+Task.add_dataset_arguments(parser)
 
 # Parse args
 args = parser.parse_args()
 model_type = args.model_type
-dataset_args = crossmodal.door_data.get_dataset_args(args)
+dataset_args = Task.get_dataset_args(args)
 
 # Move cache in case we're running on NFS (eg Juno), open PDB on quit
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
 fannypack.utils.pdb_safety_net()
 
 # Create model, Buddy
-filter_model = model_types[model_type]()
+filter_model = Task.model_types[model_type]()
 buddy = fannypack.utils.Buddy(args.experiment_name, filter_model)
 buddy.set_metadata(
     {
@@ -44,21 +43,15 @@ buddy.set_metadata(
 )
 
 # Load trajectories into memory
-train_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
-)
-eval_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
-)
-
-# train_trajectories = eval_trajectories
+train_trajectories = Task.get_train_trajectories(**dataset_args)
+eval_trajectories = Task.get_eval_trajectories(**dataset_args)
 
 # Configure helpers
 train_helpers = crossmodal.train_helpers
 train_helpers.configure(buddy=buddy, trajectories=train_trajectories)
 
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task="door")
+eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
 
 # Run model-specific training curriculum
 if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):

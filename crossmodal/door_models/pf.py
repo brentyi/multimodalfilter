@@ -7,11 +7,12 @@ import diffbayes
 import diffbayes.types as types
 from fannypack.nn import resblocks
 
+from ..tasks import DoorTask
 from . import layers
 from .dynamics import DoorDynamicsModel
 
 
-class DoorParticleFilter(diffbayes.base.ParticleFilter):
+class DoorParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """

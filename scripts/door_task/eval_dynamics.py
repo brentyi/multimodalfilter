@@ -5,6 +5,8 @@ import crossmodal
 import diffbayes
 import fannypack
 
+Task = crossmodal.tasks.DoorTask
+
 # Move cache in case we're running on NFS (eg Juno), open PDB on quit
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
 fannypack.utils.pdb_safety_net()
@@ -22,15 +24,12 @@ model_type = buddy.metadata["model_type"]
 dataset_args = buddy.metadata["dataset_args"]
 
 # Load model using experiment metadata
-filter_model: diffbayes.base.Filter = crossmodal.door_models.model_types[model_type]()
+filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
 buddy.attach_model(filter_model)
 buddy.load_checkpoint(label=args.checkpoint_label)
 
 # Load trajectories using experiment metadata
-eval_trajectories = crossmodal.door_data.load_trajectories(
-    "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
-    # ("panda_door_pull_100.hdf5", 10), ("panda_door_push_100.hdf5", 10), **dataset_args
-)
+eval_trajectories = Task.get_eval_trajectories(**dataset_args)
 
 states = []
 observations = fannypack.utils.SliceWrapper({})

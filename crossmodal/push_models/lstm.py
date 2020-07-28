@@ -7,12 +7,13 @@ import diffbayes
 import diffbayes.types as types
 from fannypack.nn import resblocks
 
+from ..tasks import PushTask
 from . import layers
 
 
-class PushLSTMFilter(diffbayes.base.Filter):
+class PushLSTMFilter(diffbayes.base.Filter, PushTask.Filter):
     def __init__(self, units: int = 32):
-    # def __init__(self, units: int = 64):
+        # def __init__(self, units: int = 64):
         """Initializes an LSTM architecture for our door task.
         """
         super().__init__(state_dim=2)

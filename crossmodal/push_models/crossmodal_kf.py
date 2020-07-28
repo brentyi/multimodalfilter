@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -10,6 +11,7 @@ from ..base_models import (
     CrossmodalKalmanFilterMeasurementModel,
     CrossmodalKalmanFilterWeightModel,
 )
+from ..tasks import PushTask
 from . import layers
 from .dynamics import PushDynamicsModel
 from .kf import PushKalmanFilterMeasurementModel
@@ -17,30 +19,31 @@ from .kf import PushKalmanFilter
 import numpy as np
 import torch.nn.functional as F
 
-class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter):
+
+class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
     def __init__(self):
         """Initializes a kalman filter for our Push task.
         """
 
         super().__init__(
-            filter_models= [
+            filter_models=[
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
                     measurement_model=PushKalmanFilterMeasurementModel(
                         modalities={"image"}
                     ),
-
                 ),
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
                     measurement_model=PushKalmanFilterMeasurementModel(
                         modalities={"pos", "sensors"}
                     ),
-                )
+                ),
             ],
             crossmodal_weight_model=PushCrossmodalKalmanFilterWeightModel(state_dim=2),
             state_dim=2,
         )
+
     #
     # def forward(
     #         self, *, observations: types.ObservationsTorch,
@@ -88,9 +91,9 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter):
     #
     #     return super.forward(observations=observations, controls=controls)
 
+
 class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
-    def __init__(self, units: int = 64, state_dim: int = 2,
-                 know_image_blackout=False):
+    def __init__(self, units: int = 64, state_dim: int = 2, know_image_blackout=False):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
 
@@ -171,9 +174,11 @@ class PushMeasurementCrossmodalKalmanFilter(PushKalmanFilter):
             measurement_model=CrossmodalKalmanFilterMeasurementModel(
                 measurement_models=[
                     PushKalmanFilterMeasurementModel(modalities={"image"}),
-                    PushKalmanFilterMeasurementModel(modalities={"pos", "sensors"})
+                    PushKalmanFilterMeasurementModel(modalities={"pos", "sensors"}),
                 ],
-                crossmodal_weight_model=PushCrossmodalKalmanFilterWeightModel(state_dim=2),
+                crossmodal_weight_model=PushCrossmodalKalmanFilterWeightModel(
+                    state_dim=2
+                ),
                 state_dim=2,
             ),
         )
