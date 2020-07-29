@@ -52,7 +52,7 @@ class DoorCrossmodalParticleFilterSeq5(DoorCrossmodalParticleFilter, DoorTask.Fi
 
 
 class DoorCrossmodalWeightModel(CrossmodalWeightModel):
-    def __init__(self, know_image_blackout: bool, units: int = 64):
+    def __init__(self, know_image_blackout: bool, units: int = 128):
         modality_count = 2
         super().__init__(modality_count=modality_count)
 
@@ -66,6 +66,8 @@ class DoorCrossmodalWeightModel(CrossmodalWeightModel):
         self.fusion_layers = nn.Sequential(
             nn.Linear(units * 3, units),
             nn.ReLU(inplace=True),
+            resblocks.Linear(units),
+            resblocks.Linear(units),
             resblocks.Linear(units),
             nn.Linear(units, modality_count),
             # nn.LogSigmoid() # <- This drops performance slightly

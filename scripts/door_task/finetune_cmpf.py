@@ -34,12 +34,12 @@ dataset_args = buddy.metadata["dataset_args"]
 # Load model using experiment metadata
 filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
 buddy.attach_model(filter_model)
-# try:
-#     buddy.load_checkpoint()
-# except FileNotFoundError:
-#     buddy.load_checkpoint(
-#         experiment_name=args.experiment_name, label=args.checkpoint_label
-#     )
+try:
+    buddy.load_checkpoint()
+except FileNotFoundError:
+    buddy.load_checkpoint(
+        experiment_name=args.experiment_name, label=args.checkpoint_label
+    )
 
 # Load trajectories into memory
 train_trajectories = Task.get_train_trajectories(**dataset_args)
@@ -85,17 +85,17 @@ if isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilter)
 
     # Train with unfrozen measurement models
     eval_helpers.log_eval()
+    # warmup_lr()
+    # for _ in range(5):
+    #     train_helpers.train_e2e(
+    #         subsequence_length=8,
+    #         epochs=1,
+    #         batch_size=32,
+    #         optimizer_name="train_filter_recurrent",
+    #     )
+    #     eval_helpers.log_eval()
     warmup_lr()
-    for _ in range(5):
-        train_helpers.train_e2e(
-            subsequence_length=8,
-            epochs=1,
-            batch_size=32,
-            optimizer_name="train_filter_recurrent",
-        )
-        eval_helpers.log_eval()
-    warmup_lr()
-    for _ in range(10):
+    for _ in range(30):
         train_helpers.train_e2e(
             subsequence_length=16,
             epochs=1,
@@ -103,7 +103,7 @@ if isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilter)
             optimizer_name="train_filter_recurrent",
         )
         eval_helpers.log_eval()
-    buddy.save_checkpoint("finetune-phase2")
+    buddy.save_checkpoint()
 
 else:
     assert False, "No training curriculum found for model type"

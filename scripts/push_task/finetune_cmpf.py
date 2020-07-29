@@ -109,7 +109,7 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalParticleFilter)
         optimizer_name="train_filter_recurrent",
     )
     eval_helpers.log_eval()
-    buddy.save_checkpoint("finetune-phase2")
+    buddy.save_checkpoint()
 
 else:
     assert False, "No training curriculum found for model type"
