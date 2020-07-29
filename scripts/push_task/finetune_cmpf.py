@@ -67,29 +67,29 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalParticleFilter)
 
     def warmup_lr():
         start_steps = buddy.optimizer_steps
-        warmup_steps = 25
+        warmup_steps = 100
         buddy.set_learning_rate(
             optimizer_name="train_filter_recurrent",
             value=lambda steps: min(1e-4, (steps - start_steps) / warmup_steps * 1e-4),
         )
 
     # Train everything end-to-end
-    eval_helpers.log_eval()
-    warmup_lr()
-    train_helpers.train_e2e(
-        subsequence_length=4,
-        epochs=5,
-        batch_size=32,
-        optimizer_name="train_filter_recurrent",
-    )
-    eval_helpers.log_eval()
-    warmup_lr()
-    train_helpers.train_e2e(
-        subsequence_length=8,
-        epochs=5,
-        batch_size=32,
-        optimizer_name="train_filter_recurrent",
-    )
+    # eval_helpers.log_eval()
+    # warmup_lr()
+    # train_helpers.train_e2e(
+    #     subsequence_length=4,
+    #     epochs=5,
+    #     batch_size=32,
+    #     optimizer_name="train_filter_recurrent",
+    # )
+    # eval_helpers.log_eval()
+    # warmup_lr()
+    # train_helpers.train_e2e(
+    #     subsequence_length=8,
+    #     epochs=5,
+    #     batch_size=32,
+    #     optimizer_name="train_filter_recurrent",
+    # )
     eval_helpers.log_eval()
     warmup_lr()
     train_helpers.train_e2e(
