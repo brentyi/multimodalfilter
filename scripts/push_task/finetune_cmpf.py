@@ -29,7 +29,12 @@ dataset_args = buddy.metadata["dataset_args"]
 # Load model using experiment metadata
 filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
 buddy.attach_model(filter_model)
-buddy.load_checkpoint(experiment_name=args.experiment_name, label=args.checkpoint_label)
+try:
+    buddy.load_checkpoint()
+except FileNotFoundError:
+    buddy.load_checkpoint(
+        experiment_name=args.experiment_name, label=args.checkpoint_label
+    )
 
 # Load trajectories into memory
 train_trajectories = Task.get_train_trajectories(**dataset_args)
