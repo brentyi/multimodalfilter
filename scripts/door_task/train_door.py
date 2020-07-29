@@ -31,6 +31,8 @@ fannypack.utils.pdb_safety_net()
 
 # Create model, Buddy
 filter_model = Task.model_types[model_type]()
+if args.sequential_image_rate > 1:
+    filter_model.know_image_blackout = True
 buddy = fannypack.utils.Buddy(args.experiment_name, filter_model)
 buddy.set_metadata(
     {
