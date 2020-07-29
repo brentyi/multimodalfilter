@@ -93,37 +93,33 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter, DoorTask.Filter):
 
 
 class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
-    def __init__(self, units: int = 64, state_dim: int = 2, know_image_blackout=False):
+    def __init__(self, units: int = 64, state_dim: int = 2):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
 
-        weighting_types = ["sigmoid", "softmax", "absolute"]
+        weighting_types = ["softmax", "absolute"]
 
         self.observation_image_layers = layers.observation_image_layers(units)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
-        self.weighting_type = "sigmoid"
+        self.weighting_type = "softmax"
 
         assert self.weighting_type in weighting_types
 
-        if self.weighting_type == "sigmoid":
-            # Initial fusion layers
-            self.fusion_layers = nn.Sequential(
-                nn.Linear(units * 3, units),
-                nn.ReLU(inplace=True),
-                resblocks.Linear(units),
-                nn.Linear(units, modality_count * self.state_dim),
-                nn.Sigmoid(),
-            )
-        else:
-            self.fusion_layers = nn.Sequential(
-                nn.Linear(units * 3, units),
-                nn.ReLU(inplace=True),
-                resblocks.Linear(units),
-                nn.Linear(units, modality_count * self.state_dim),
-            )
+        self.fusion_layers = nn.Sequential(
+            nn.Linear(units * 3, units),
+            nn.ReLU(inplace=True),
+            resblocks.Linear(units),
+            nn.Linear(units, modality_count * self.state_dim),
+        )
 
-        self.know_image_blackout = know_image_blackout
+        for m in self.modules():
+            if type(m) == nn.Linear:
+                nn.init.uniform_(m.weight)
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                nn.init.kaiming_normal_(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.zero_()
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
         """Compute modality weights.
@@ -156,7 +152,7 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         elif self.weighting_type == "softmax":
             state_weights = F.softmax(state_weights, dim=0)
 
-        state_weights = state_weights / (torch.sum((state_weights), dim=0) + 1e-9)
+        state_weights = state_weights / (torch.sum(state_weights, dim=0) + 1e-9)
 
         return state_weights
 

@@ -54,12 +54,14 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
         device = controls.device
 
         if self.know_image_blackout:
+            print("know?")
 
             blackout_indices = torch.sum(torch.abs(
                 observations['image'].reshape((N, -1))), dim=1) < 1e-8
 
             if torch.sum(blackout_indices) == 0 or \
                     np.sum(self._enabled_models) < len(self._enabled_models):
+                print("no blackout")
                 return super().forward(observations=observations, controls=controls)
 
             unimodal_states, unimodal_covariances = self.calculate_unimodal_states(observations,
@@ -81,6 +83,8 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
             force_weight = force_beta_new + mask * force_weight
 
             state_weights = torch.stack([image_weight, force_weight])
+
+            print(state_weights)
             assert state_weights.shape == (np.sum(self._enabled_models), N, self.state_dim)
 
             weighted_states, weighted_covariances = self.calculate_weighted_states(state_weights,
@@ -95,37 +99,34 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
 
 
 class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
-    def __init__(self, units: int = 64, state_dim: int = 2, know_image_blackout=False):
+    def __init__(self, units: int = 64, state_dim: int = 2,):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
 
-        weighting_types = ["sigmoid", "softmax", "absolute"]
+        weighting_types = ["softmax", "absolute"]
 
         self.observation_image_layers = layers.observation_image_layers(units)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
-        self.weighting_type = "sigmoid"
+        self.weighting_type = "softmax"
 
         assert self.weighting_type in weighting_types
 
-        if self.weighting_type == "sigmoid":
-            # Initial fusion layers
-            self.fusion_layers = nn.Sequential(
-                nn.Linear(units * 3, units),
-                nn.ReLU(inplace=True),
-                resblocks.Linear(units),
-                nn.Linear(units, modality_count * self.state_dim),
-                nn.Sigmoid(),
-            )
-        else:
-            self.fusion_layers = nn.Sequential(
-                nn.Linear(units * 3, units),
-                nn.ReLU(inplace=True),
-                resblocks.Linear(units),
-                nn.Linear(units, modality_count * self.state_dim),
-            )
 
-        self.know_image_blackout = know_image_blackout
+        self.fusion_layers = nn.Sequential(
+            nn.Linear(units * 3, units),
+            nn.ReLU(inplace=True),
+            resblocks.Linear(units),
+            nn.Linear(units, modality_count * self.state_dim),
+        )
+
+        for m in self.modules():
+            if type(m) == nn.Linear:
+                nn.init.uniform_(m.weight)
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
+                nn.init.kaiming_normal_(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.zero_()
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
         """Compute modality weights.
