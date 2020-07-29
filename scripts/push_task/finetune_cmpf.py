@@ -1,3 +1,8 @@
+# Our normal CMPF training curriculum doesn't ever unfreeze *both* of our measurement
+# models and train end-to-end
+#
+# Sole purpose of this script is to do that :)
+
 import argparse
 import dataclasses
 import datetime
