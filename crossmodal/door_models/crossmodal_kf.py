@@ -97,14 +97,14 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         modality_count = 2
         super().__init__(modality_count=modality_count, state_dim=state_dim)
 
-        weighting_types = ["softmax", "absolute"]
+        self.weighting_types = ["softmax", "absolute"]
 
         self.observation_image_layers = layers.observation_image_layers(units)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
         self.weighting_type = "softmax"
 
-        assert self.weighting_type in weighting_types
+        assert self.weighting_type in self.weighting_types
 
         self.fusion_layers = nn.Sequential(
             nn.Linear(units * 3, units),
@@ -130,6 +130,7 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
         Returns:
             torch.Tensor: Computed weights. Shape should be `(N, modality_count)`.
         """
+        assert self.weighting_type in self.weighting_types
 
         N, _ = observations["gripper_pos"].shape
 

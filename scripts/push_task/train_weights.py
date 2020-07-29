@@ -20,7 +20,7 @@ parser.add_argument("--experiment-name", type=str)
 parser.add_argument("--checkpoint-label", type=str, default=None)
 parser.add_argument("--save", action="store_true")
 parser.add_argument("--original-experiment", type=str, default=None)
-parser.add_argument("--unimodal", action="store_true")
+parser.add_argument("--weighting_type", type=str, default="softmax", choices=["softmax", "absolute"])
 
 Task.add_dataset_arguments(parser)
 # Parse args
@@ -48,8 +48,6 @@ else:
     except:
         print("missing metadata")
 
-
-
 filter_model: diffbayes.base.Filter = crossmodal.push_models.model_types[model_type]()
 buddy.attach_model(filter_model)
 buddy.load_checkpoint(label=args.checkpoint_label, experiment_name=args.original_experiment)
@@ -68,6 +66,8 @@ eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
 
 # Run model-specific training curriculum
 if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
+    filter_model.crossmodal_weight_model.weighting_type = args.weighting_type
+
     image_model = filter_model.filter_models[0]
     force_model = filter_model.filter_models[1]
 
