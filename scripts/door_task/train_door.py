@@ -120,6 +120,8 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     # Freeze dynamics
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
+    buddy.set_default_learning_rate(1e-3)
+
     # Pre-train measurement model (image)
     measurement_model.enabled_models = [True, False]
     train_helpers.train_pf_measurement(epochs=3, batch_size=64)
