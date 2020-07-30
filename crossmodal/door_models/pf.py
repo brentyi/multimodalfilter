@@ -9,7 +9,7 @@ from fannypack.nn import resblocks
 
 from ..tasks import DoorTask
 from . import layers
-from .dynamics import DoorDynamicsModel
+from .dynamics import DoorDynamicsModelBrent
 
 
 class DoorParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter):
@@ -18,7 +18,7 @@ class DoorParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter):
         """
 
         super().__init__(
-            dynamics_model=DoorDynamicsModel(),
+            dynamics_model=DoorDynamicsModelBrent(),
             measurement_model=DoorMeasurementModel(),
             num_particles=30,
         )

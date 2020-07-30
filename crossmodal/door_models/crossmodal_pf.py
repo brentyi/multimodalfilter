@@ -11,7 +11,7 @@ from ..base_models import (
 )
 from ..tasks import DoorTask
 from . import layers
-from .dynamics import DoorDynamicsModel
+from .dynamics import DoorDynamicsModelBrent
 from .pf import DoorMeasurementModel
 
 
@@ -21,7 +21,7 @@ class DoorCrossmodalParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filte
         """
 
         super().__init__(
-            dynamics_model=DoorDynamicsModel(),
+            dynamics_model=DoorDynamicsModelBrent(),
             measurement_model=CrossmodalParticleFilterMeasurementModel(
                 measurement_models=[
                     DoorMeasurementModel(modalities={"image"}),
