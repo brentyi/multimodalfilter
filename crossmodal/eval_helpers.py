@@ -41,7 +41,7 @@ def log_eval(measurement_initialize=False) -> None:
                 buddy.log_scalar(key, value)
 
 
-def run_eval(measurement_initialize=False) -> Dict[str, float]:
+def run_eval(measurement_initialize=False, eval_dynamics=False) -> Dict[str, float]:
     """Evaluate a filter, print out + return metrics.
     """
     assert isinstance(filter_model, diffbayes.base.Filter)
@@ -102,10 +102,15 @@ def run_eval(measurement_initialize=False) -> Dict[str, float]:
             )
 
         # Run filter
-        predicted_states = filter_model.forward_loop(
-            observations=fannypack.utils.SliceWrapper(observations)[1:],
-            controls=controls[1:],
-        )
+        if eval_dynamics:
+            predicted_states, _scale_trils = filter_model.dynamics_model.forward_loop(
+                initial_states=states[0], controls=controls[1:]
+            )
+        else:
+            predicted_states = filter_model.forward_loop(
+                observations=fannypack.utils.SliceWrapper(observations)[1:],
+                controls=controls[1:],
+            )
 
         # Validate predicted states
         T = predicted_states.shape[0]

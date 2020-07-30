@@ -1,5 +1,8 @@
 import argparse
+import torch
 import dataclasses
+
+import numpy as np
 
 import crossmodal
 import diffbayes
@@ -31,20 +34,7 @@ buddy.load_checkpoint(label=args.checkpoint_label)
 # Load trajectories using experiment metadata
 eval_trajectories = Task.get_eval_trajectories(**dataset_args)
 
-states = []
-observations = fannypack.utils.SliceWrapper({})
-controls = []
-for traj in eval_trajectories:
-    states.append(traj[0])
-    observations.append(traj[1])
-    controls.append(traj[2])
-controls = np.stack([traj[2] for traj in eval_trajectories], axis=0)
-
 # Run eval
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories)
-eval_results = eval_helpers.run_eval()
-
-# Save eval results
-if args.save:
-    buddy.add_metadata({"eval_results": dataclasses.asdict(eval_results)})
+eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
+eval_results = eval_helpers.run_eval(eval_dynamics=True)
