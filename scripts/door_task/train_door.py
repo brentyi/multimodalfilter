@@ -286,11 +286,11 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     # Pre-train kalman filter (image)
     filter_model.enabled_models = [True, False]
     train_helpers.train_e2e(
-        subsequence_length=4, epochs=3, batch_size=32, optimizer_name="image_ekf"
+        subsequence_length=4, epochs=5, batch_size=32, optimizer_name="image_ekf"
     )
     eval_helpers.log_eval()
     train_helpers.train_e2e(
-        subsequence_length=8, epochs=3, batch_size=32, optimizer_name="image_ekf"
+        subsequence_length=8, epochs=5, batch_size=32, optimizer_name="image_ekf"
     )
     eval_helpers.log_eval()
     train_helpers.train_e2e(
@@ -302,11 +302,11 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     # Pre-train kalman filter (proprioception + haptics)
     filter_model.enabled_models = [False, True]
     train_helpers.train_e2e(
-        subsequence_length=4, epochs=3, batch_size=32, optimizer_name="force_ekf"
+        subsequence_length=4, epochs=5, batch_size=32, optimizer_name="force_ekf"
     )
     eval_helpers.log_eval()
     train_helpers.train_e2e(
-        subsequence_length=8, epochs=3, batch_size=32, optimizer_name="force_ekf"
+        subsequence_length=8, epochs=5, batch_size=32, optimizer_name="force_ekf"
     )
     eval_helpers.log_eval()
     train_helpers.train_e2e(
@@ -322,14 +322,21 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     fannypack.utils.unfreeze_module(filter_model.crossmodal_weight_model)
     fannypack.utils.freeze_module(filter_model.filter_models)
     train_helpers.train_e2e(
-        subsequence_length=3, epochs=1, batch_size=32, optimizer_name="freeze_ekf"
+        subsequence_length=4, epochs=5, batch_size=32, optimizer_name="freeze_ekf"
+    )
+    train_helpers.train_e2e(
+        subsequence_length=6, epochs=5, batch_size=32, optimizer_name="freeze_ekf"
+    )
+    train_helpers.train_e2e(
+        subsequence_length=8, epochs=5, batch_size=32, optimizer_name="freeze_ekf"
     )
     buddy.save_checkpoint("phase4-freeze")
 
     # Train everything end-to-end
     fannypack.utils.unfreeze_module(filter_model.filter_models)
+    fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
 
-    train_helpers.train_e2e(subsequence_length=3, epochs=5,
+    train_helpers.train_cm_e2e(subsequence_length=3, epochs=5,
                             batch_size=32, measurement_initialize=False)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length3")
@@ -339,7 +346,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     )
 
     for _ in range(3):
-        train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,
+        train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
                                 measurement_initialize=False)
 
         eval_helpers.log_eval()
@@ -347,13 +354,18 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
 
     for _ in range(2):
 
-        train_helpers.train_e2e(subsequence_length=6, epochs=5, batch_size=32,
+        train_helpers.train_cm_e2e(subsequence_length=6, epochs=5, batch_size=32,
                                 measurement_initialize=False)
 
         eval_helpers.log_eval()
         print("kalman e2e")
+    buddy.save_checkpoint("phase4-length6")
 
-    buddy.save_checkpoint("phase4-done")
+    train_helpers.train_e2e(subsequence_length=6, epochs=5, batch_size=32,
+                               measurement_initialize=False)
+    eval_helpers.log_eval()
+
+    buddy.save_checkpoint("phase4-oneloss")
 
 elif isinstance(filter_model, crossmodal.door_models.DoorUnimodalKalmanFilter):
     image_model = filter_model.filter_models[0]

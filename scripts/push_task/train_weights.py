@@ -51,12 +51,16 @@ else:
 filter_model: diffbayes.base.Filter = crossmodal.push_models.model_types[model_type]()
 buddy.attach_model(filter_model)
 
-buddy.load_checkpoint_module(
-    source="filter_models",
-    target="filter_models",
-    label=args.checkpoint_label,
-    experiment_name=args.original_experiment
-)
+buddy.load_checkpoint(experiment_name=args.original_experiment, label=args.checkpoint_label)
+
+# buddy.load_checkpoint_module(
+#     source="filter_models",
+#     target="filter_models",
+#     label=args.checkpoint_label,
+#     experiment_name=args.original_experiment
+# )
+
+
 
 # Load trajectories into memory
 train_trajectories = Task.get_train_trajectories(**dataset_args)
@@ -125,8 +129,7 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
     # buddy.save_checkpoint("finetune_phase4-freeze")
 
     # Train everything end-to-end
-    # fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
-
+    fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
     fannypack.utils.unfreeze_module(filter_model.filter_models)
     # fannypack.utils.freeze_module(image_model.dynamics_model)
     # fannypack.utils.freeze_module(force_model.dynamics_model)
@@ -136,9 +139,9 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
     eval_helpers.log_eval()
     buddy.save_checkpoint("finetune_phase4-length3")
 
-    buddy.set_regularization_weight(
-        optimizer_name="train_filter_recurrent", value=0.0001
-    )
+    # buddy.set_regularization_weight(
+    #     optimizer_name="train_filter_recurrent", value=0.0001
+    # )
 
     for _ in range(4):
 
@@ -170,6 +173,8 @@ else:
 # Eval model when done
 eval_results = crossmodal.eval_helpers.run_eval()
 buddy.add_metadata({"eval_results": eval_results})
+
+# python scripts/push_task/train_weights.py --checkpoint-label finetune_phase4-freeze --original-experiment 0729_pushreal_weights_cmekf_sm_2_trainlonger --experiment-name 0729_pushreal_weights_cmekf_sm_9_3losses
 
 # python scripts/push_task/train_weights.py --checkpoint-label finetune_phase4-freeze --original-experiment  0729_pushreal_weights_cmekf_sm_1_trainunimodal  --experiment-name 0729_pushreal_weights_cmekf_sm_6_freezedyn
 
