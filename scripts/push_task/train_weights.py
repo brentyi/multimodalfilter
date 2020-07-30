@@ -50,8 +50,13 @@ else:
 
 filter_model: diffbayes.base.Filter = crossmodal.push_models.model_types[model_type]()
 buddy.attach_model(filter_model)
-buddy.load_checkpoint(label=args.checkpoint_label, experiment_name=args.original_experiment)
 
+buddy.load_checkpoint_module(
+    source="filter_models",
+    target="filter_models",
+    label=args.checkpoint_label,
+    experiment_name=args.original_experiment
+)
 
 # Load trajectories into memory
 train_trajectories = Task.get_train_trajectories(**dataset_args)
@@ -71,24 +76,60 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
     image_model = filter_model.filter_models[0]
     force_model = filter_model.filter_models[1]
 
+    # # Pre-train kalman filter (image)
+    # filter_model.enabled_models = [True, False]
+    #
+    # train_helpers.train_e2e(
+    #     subsequence_length=16, epochs=20, batch_size=32, optimizer_name="image_ekf"
+    # )
+    # eval_helpers.log_eval()
+    # buddy.save_checkpoint("phase3-image")
+    #
+    # # Pre-train kalman filter (proprioception + haptics)
+    # filter_model.enabled_models = [False, True]
+    #
+    # train_helpers.train_e2e(
+    #     subsequence_length=16, epochs=20, batch_size=32, optimizer_name="force_ekf"
+    # )
+    # eval_helpers.log_eval()
+    # buddy.save_checkpoint("phase3-force")
+
     filter_model.enabled_models = [True, True]
 
     # Unfreeze weight model, freeze filter model
-    fannypack.utils.unfreeze_module(filter_model.crossmodal_weight_model)
-    fannypack.utils.freeze_module(filter_model.filter_models)
+    # fannypack.utils.unfreeze_module(filter_model.crossmodal_weight_model)
+    # fannypack.utils.freeze_module(filter_model.filter_models)
+    #
+    # fannypack.utils.freeze_module(image_model.dynamics_model)
+    # fannypack.utils.freeze_module(force_model.dynamics_model)
 
-    train_helpers.train_cm_e2e(subsequence_length=3, epochs=5, batch_size=32,
-                            optimizer_name="freeze_ekf")
-    eval_helpers.log_eval()
+    # buddy.set_learning_rate(value=0.001, optimizer_name="freeze_ekf")
 
-    train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
-                            optimizer_name="freeze_ekf")
-    eval_helpers.log_eval()
-
-    buddy.save_checkpoint("finetune_phase4-freeze")
+    # train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
+    #                         optimizer_name="freeze_ekf")
+    # eval_helpers.log_eval()
+    # # buddy.set_learning_rate(value=0.005, optimizer_name="freeze_ekf")
+    #
+    # train_helpers.train_cm_e2e(subsequence_length=8, epochs=5, batch_size=32,
+    #                         optimizer_name="freeze_ekf")
+    # eval_helpers.log_eval()
+    # # buddy.set_learning_rate(value=0.0001, optimizer_name="freeze_ekf")
+    #
+    # train_helpers.train_cm_e2e(subsequence_length=16, epochs=5, batch_size=32,
+    #                         optimizer_name="freeze_ekf")
+    # eval_helpers.log_eval()
+    # train_helpers.train_cm_e2e(subsequence_length=16, epochs=5, batch_size=32,
+    #                         optimizer_name="freeze_ekf")
+    # eval_helpers.log_eval()
+    #
+    # buddy.save_checkpoint("finetune_phase4-freeze")
 
     # Train everything end-to-end
+    fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
+
     fannypack.utils.unfreeze_module(filter_model.filter_models)
+    # fannypack.utils.freeze_module(image_model.dynamics_model)
+    # fannypack.utils.freeze_module(force_model.dynamics_model)
 
     train_helpers.train_cm_e2e(subsequence_length=3, epochs=5,
                             batch_size=32, measurement_initialize=False)
@@ -129,3 +170,7 @@ else:
 # Eval model when done
 eval_results = crossmodal.eval_helpers.run_eval()
 buddy.add_metadata({"eval_results": eval_results})
+
+# python scripts/push_task/train_weights.py --checkpoint-label finetune_phase4-freeze --original-experiment  0729_pushreal_weights_cmekf_sm_1_trainunimodal  --experiment-name 0729_pushreal_weights_cmekf_sm_6_freezedyn
+
+# python scripts/push_task/train_weights.py --checkpoint-label phase3-force --original-experiment 0728_pushreal_cmekf_0 --experiment-name 0729_pushreal_weights_cmekf_sm_2_trainlonger

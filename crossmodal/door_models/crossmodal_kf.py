@@ -160,7 +160,7 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
 
 class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
     def __init__(self):
-        """Initializes a particle filter for our door task.
+        """Initializes a crossmodal kalman filter for our door task.
         """
 
         super().__init__(

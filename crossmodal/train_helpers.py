@@ -240,20 +240,16 @@ def train_crossmodal_filter(
                 current_prediction = cm_filter(observations=obs[t], controls=c[t])
                 state_pred = current_prediction.new_zeros((T, N, cm_filter.state_dim))
                 state_pred[t] = current_prediction
-                weight_pred = current_prediction.new_zeros((T, N, cm_filter.state_dim))
-
+                weight_pred = current_prediction.new_zeros((T, 2, N, cm_filter.state_dim))
+                weight_pred[t] = cm_filter.crossmodal_weight_model(observations=obs[t])
                 for t in range(1, T):
                     # Compute state prediction for a single timestep
                     # We use __call__ to make sure hooks are dispatched correctly
-                    current_prediction = cm_filter(
-                        observations=obs[t], controls=c[t]
-                    )
+                    current_prediction = cm_filter(observations=obs[t], controls=c[t])
 
                     # Validate & add to output
                     state_pred[t] = current_prediction
-                    weight_pred[t] = cm_filter.crossmodal_weight_model(
-                        observations=obs[t]
-                    )
+                    weight_pred[t] = cm_filter.crossmodal_weight_model(observations=obs[t])
 
                 return state_pred, weight_pred
 
@@ -274,9 +270,10 @@ def train_crossmodal_filter(
                 buddy.log_gradient_norm()
                 buddy.log("Pred  mean", state_predictions.mean())
                 buddy.log("Pred  std", state_predictions.std())
-                buddy.log("Weight Pred mean", weight_predictions.mean())
-                buddy.log("Weight Pred std", weight_predictions.std())
-
+                buddy.log("Weight 0 Pred mean", weight_predictions[:,0].mean())
+                buddy.log("Weight 0 Pred std", weight_predictions[:,0].std())
+                buddy.log("Weight 1 Pred mean", weight_predictions[:,1].mean())
+                buddy.log("Weight 1 Pred std", weight_predictions[:,1].std())
     # Print average training loss
     epoch_loss /= len(dataloader)
     print("(train_filter) Epoch training loss: ", epoch_loss)

@@ -21,6 +21,7 @@ parser.add_argument("--checkpoint-label", type=str, default=None)
 parser.add_argument("--save", action="store_true")
 parser.add_argument("--original-experiment", type=str, default=None)
 parser.add_argument("--unimodal", action="store_true")
+parser.add_argument("--curriculum", type=int, default=0)
 
 Task.add_dataset_arguments(parser)
 # Parse args

@@ -54,14 +54,12 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
         device = controls.device
 
         if self.know_image_blackout:
-            print("know?")
 
             blackout_indices = torch.sum(torch.abs(
                 observations['image'].reshape((N, -1))), dim=1) < 1e-8
 
             if torch.sum(blackout_indices) == 0 or \
                     np.sum(self._enabled_models) < len(self._enabled_models):
-                print("no blackout")
                 return super().forward(observations=observations, controls=controls)
 
             unimodal_states, unimodal_covariances = self.calculate_unimodal_states(observations,
@@ -105,7 +103,7 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
 
         self.weighting_types = ["softmax", "absolute"]
 
-        self.observation_image_layers = layers.observation_image_layers(units)
+        self.observation_image_layers = layers.observation_image_layers(units, spanning_avg_pool=False)
         self.observation_pos_layers = layers.observation_pos_layers(units)
         self.observation_sensors_layers = layers.observation_sensors_layers(units)
         self.weighting_type = "softmax"

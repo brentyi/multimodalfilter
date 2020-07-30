@@ -360,6 +360,62 @@ elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter)
 
     buddy.save_checkpoint("phase4-done")
 
+elif isinstance(filter_model, crossmodal.door_models.PushMeasurementCrossmodalKalmanFilter):
+    # Pull out measurement model, freeze crossmodal weights
+    measurement_model: CrossmodalKalmanFilterMeasurementModel = cast(
+        CrossmodalKalmanFilterMeasurementModel, filter_model.measurement_model,
+    )
+
+    fannypack.utils.freeze_module(measurement_model.crossmodal_weight_model)
+
+    # Pre-train dynamics (single-step)
+    train_helpers.train_pf_dynamics_single_step(epochs=5)
+    buddy.save_checkpoint("phase0")
+
+    # Pre-train dynamics (recurrent)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
+    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
+    buddy.save_checkpoint("phase1")
+
+    # Freeze dynamics
+    fannypack.utils.freeze_module(filter_model.dynamics_model)
+
+    # Pre-train measurement model (image)
+    measurement_model.enabled_models = [True, False]
+    train_helpers.train_kf_measurement(epochs=5, batch_size=64)
+    buddy.save_checkpoint("phase2-image")
+
+    # Pre-train measurement model (proprioception + haptics)
+    measurement_model.enabled_models = [False, True]
+    train_helpers.train_kf_measurement(epochs=5, batch_size=64)
+    buddy.save_checkpoint("phase3-force")
+
+    # Enable both measurement models
+    measurement_model.enabled_models = [True, True]
+    fannypack.utils.unfreeze_module(measurement_model.crossmodal_weight_model)
+    fannypack.utils.freeze_module(measurement_model.measurement_models)
+    train_helpers.train_kf_measurement(epochs=5, batch_size=64)
+    buddy.save_checkpoint("phase4-weights")
+
+    # freeze weights?
+    # fannypack.utils.freeze_module(measurement_model.crossmodal_weight_model)
+    fannypack.utils.unfreeze_module(measurement_model.measurement_models)
+    train_helpers.train_kf_measurement(epochs=5, batch_size=64)
+    buddy.save_checkpoint("phase4-cmmeasurement")
+
+    # freeze weights?
+    # fannypack.utils.unfreeze_module(measurement_model.crossmodal_weight_model)
+
+    # Train everything end-to-end
+    train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    train_helpers.train_e2e(subsequence_length=8, epochs=5, batch_size=32)
+    eval_helpers.log_eval()
+    for _ in range(4):
+        train_helpers.train_e2e(subsequence_length=16, epochs=5, batch_size=32)
+        eval_helpers.log_eval()
+    buddy.save_checkpoint("phase5")
 
 elif isinstance(filter_model, crossmodal.push_models.PushUnimodalKalmanFilter):
     image_model = filter_model.filter_models[0]
