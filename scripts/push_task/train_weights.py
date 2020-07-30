@@ -125,7 +125,7 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
     # buddy.save_checkpoint("finetune_phase4-freeze")
 
     # Train everything end-to-end
-    fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
+    # fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
 
     fannypack.utils.unfreeze_module(filter_model.filter_models)
     # fannypack.utils.freeze_module(image_model.dynamics_model)
@@ -140,7 +140,7 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
         optimizer_name="train_filter_recurrent", value=0.0001
     )
 
-    for _ in range(3):
+    for _ in range(4):
 
         train_helpers.train_cm_e2e(
             subsequence_length=4, epochs=5, batch_size=32, measurement_initialize=True

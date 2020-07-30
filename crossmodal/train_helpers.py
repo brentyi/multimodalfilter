@@ -240,8 +240,14 @@ def train_crossmodal_filter(
                 current_prediction = cm_filter(observations=obs[t], controls=c[t])
                 state_pred = current_prediction.new_zeros((T, N, cm_filter.state_dim))
                 state_pred[t] = current_prediction
+
+                # todo: we assume here there are two modalities
                 weight_pred = current_prediction.new_zeros((T, 2, N, cm_filter.state_dim))
                 weight_pred[t] = cm_filter.crossmodal_weight_model(observations=obs[t])
+
+                unimodal_pred = current_prediction.new_zeros((T, 2, N, cm_filter.state_dim))
+                unimodal_pred[t] = cm_filter.unimodal_states
+
                 for t in range(1, T):
                     # Compute state prediction for a single timestep
                     # We use __call__ to make sure hooks are dispatched correctly
@@ -250,30 +256,38 @@ def train_crossmodal_filter(
                     # Validate & add to output
                     state_pred[t] = current_prediction
                     weight_pred[t] = cm_filter.crossmodal_weight_model(observations=obs[t])
+                    unimodal_pred[t] = cm_filter.unimodal_states
 
-                return state_pred, weight_pred
+                return state_pred, weight_pred, unimodal_pred
 
-            state_predictions, weight_predictions = train_loop(
+            state_predictions, weight_predictions, unimodal_pred = train_loop(
                 fannypack.utils.SliceWrapper(observations)[1:],
                 fannypack.utils.SliceWrapper(controls)[1:],
                 filter_model,
             )
 
             # Minimize loss
-            loss = loss_function(state_predictions, true_states[1:])
+            loss_crossmodal = loss_function(state_predictions, true_states[1:])
+            loss_unimodal = loss_function(unimodal_pred[:, 0], true_states[1:]) +  \
+                            loss_function(unimodal_pred[:, 1], true_states[1:])
+
+            loss = 0.8 * loss_crossmodal + 0.2 * loss_unimodal
             buddy.minimize(loss, optimizer_name=optimizer_name)
             epoch_loss += fannypack.utils.to_numpy(loss)
 
             # Logging
             if batch_idx % log_interval == 0:
                 buddy.log("loss", loss)
+                buddy.log("loss_unimodal", loss_unimodal)
+                buddy.log("loss_crossmodal", loss_crossmodal)
                 buddy.log_gradient_norm()
                 buddy.log("Pred  mean", state_predictions.mean())
                 buddy.log("Pred  std", state_predictions.std())
-                buddy.log("Weight 0 Pred mean", weight_predictions[:,0].mean())
-                buddy.log("Weight 0 Pred std", weight_predictions[:,0].std())
-                buddy.log("Weight 1 Pred mean", weight_predictions[:,1].mean())
-                buddy.log("Weight 1 Pred std", weight_predictions[:,1].std())
+                buddy.log("Weight 0 Pred mean", weight_predictions[:, 0].mean())
+                buddy.log("Weight 0 Pred std",  weight_predictions[:, 0].std())
+                buddy.log("Weight 1 Pred mean", weight_predictions[:, 1].mean())
+                buddy.log("Weight 1 Pred std",  weight_predictions[:, 1].std())
+
     # Print average training loss
     epoch_loss /= len(dataloader)
     print("(train_filter) Epoch training loss: ", epoch_loss)

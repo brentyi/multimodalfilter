@@ -172,7 +172,7 @@ class PushMeasurementCrossmodalKalmanFilter(PushKalmanFilter):
         """
 
         super().__init__(
-            dynamics_model=PushDynamicsModel,
+            dynamics_model=PushDynamicsModel(),
             measurement_model=CrossmodalKalmanFilterMeasurementModel(
                 measurement_models=[
                     PushKalmanFilterMeasurementModel(modalities={"image"}),
