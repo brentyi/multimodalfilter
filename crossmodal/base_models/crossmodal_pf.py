@@ -122,6 +122,14 @@ class CrossmodalParticleFilterMeasurementModel(
             )[:, self._enabled_models]
             assert modality_log_weights.shape == (N, np.sum(self._enabled_models))
 
+            # Normalize each modality
+            unimodal_log_likelihoods_norm = torch.zeros_like(unimodal_log_likelihoods)
+            for i in range(unimodal_log_likelihoods.shape[2]):
+                source = unimodal_log_likelihoods[:, :, i]
+                unimodal_log_likelihoods_norm[:, :, i] = source - torch.max(
+                    source, dim=1, keepdim=True
+                )[0]
+
             # Weight particle likelihoods by modality & return
             particle_log_likelihoods = torch.logsumexp(
                 modality_log_weights[:, None, :] + unimodal_log_likelihoods, dim=2

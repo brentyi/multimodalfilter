@@ -1,12 +1,12 @@
 import argparse
-import torch
 import dataclasses
 
+import fannypack
 import numpy as np
+import torch
 
 import crossmodal
 import diffbayes
-import fannypack
 
 Task = crossmodal.tasks.DoorTask
 
@@ -38,3 +38,5 @@ eval_trajectories = Task.get_eval_trajectories(**dataset_args)
 eval_helpers = crossmodal.eval_helpers
 eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
 eval_results = eval_helpers.run_eval(eval_dynamics=True)
+
+buddy.add_metadata({"dynamics_eval": eval_results})

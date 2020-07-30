@@ -107,19 +107,19 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     )
     fannypack.utils.freeze_module(measurement_model.crossmodal_weight_model)
 
-    # Pre-train dynamics (single-step)
-    train_helpers.train_pf_dynamics_single_step(epochs=5)
-    buddy.save_checkpoint("phase0")
-
-    # Pre-train dynamics (recurrent)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
-    train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
-    buddy.save_checkpoint("phase1")
+    # # Pre-train dynamics (single-step)
+    # train_helpers.train_pf_dynamics_single_step(epochs=5)
+    # buddy.save_checkpoint("phase0")
+    #
+    # # Pre-train dynamics (recurrent)
+    # train_helpers.train_pf_dynamics_recurrent(subsequence_length=4, epochs=5)
+    # train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
+    # train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
+    # buddy.save_checkpoint("phase1")
+    buddy.load_checkpoint_module("dynamics_model", experiment_name="pf_blackout0.4")
 
     # Freeze dynamics
     fannypack.utils.freeze_module(filter_model.dynamics_model)
-
     buddy.set_default_learning_rate(1e-3)
 
     # Pre-train measurement model (image)
