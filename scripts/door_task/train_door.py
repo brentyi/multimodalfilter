@@ -116,7 +116,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     # train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
     # train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
     # buddy.save_checkpoint("phase1")
-    buddy.load_checkpoint_module("dynamics_model", experiment_name="pf_blackout0.4")
+    buddy.load_checkpoint_module("dynamics_model", experiment_name="pf_seq5")
 
     # Freeze dynamics
     fannypack.utils.freeze_module(filter_model.dynamics_model)
