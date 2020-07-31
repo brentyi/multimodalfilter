@@ -8,7 +8,7 @@ import diffbayes
 import fannypack
 from crossmodal.base_models import CrossmodalKalmanFilter
 
-Task = crossmodal.tasks.PushTask
+Task = crossmodal.tasks.DoorTask
 
 # Move cache in case we're running on NFS (eg Juno), open PDB on quit
 fannypack.data.set_cache_path(crossmodal.__path__[0] + "/../.cache")
@@ -48,10 +48,8 @@ else:
     except:
         print("missing metadata")
 
-filter_model: diffbayes.base.Filter = crossmodal.push_models.model_types[model_type]()
+filter_model: diffbayes.base.Filter = crossmodal.door_models.model_types[model_type]()
 buddy.attach_model(filter_model)
-
-# buddy.load_checkpoint(experiment_name=args.original_experiment, label=args.checkpoint_label)
 
 buddy.load_checkpoint_module(
     source="filter_models",
@@ -74,7 +72,7 @@ eval_helpers = crossmodal.eval_helpers
 eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
 
 # Run model-specific training curriculum
-if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
+if isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter):
     filter_model.crossmodal_weight_model.weighting_type = args.weighting_type
 
     image_model = filter_model.filter_models[0]
@@ -127,9 +125,9 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
             subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
         )
         eval_helpers.log_eval()
-
     buddy.save_checkpoint("phase5-length6")
 
+    # train using one loss
     for _ in range(2):
         train_helpers.train_e2e(
             subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
@@ -138,24 +136,14 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
 
     eval_helpers.log_eval()
     print("kalman e2e")
-
     buddy.save_checkpoint("phase5-done")
 
 
 else:
     assert False, "No training curriculum found for model type"
 
-# Add training end time
-# buddy.add_metadata(
-#     {"train_end_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),}
-# )
 
 # Eval model when done
 eval_results = crossmodal.eval_helpers.run_eval()
 buddy.add_metadata({"eval_results": eval_results})
 
-# python scripts/push_task/train_weights.py --checkpoint-label finetune_phase4-freeze --original-experiment 0729_pushreal_weights_cmekf_sm_2_trainlonger --experiment-name 0729_pushreal_weights_cmekf_sm_9_3losses
-
-# python scripts/push_task/train_weights.py --checkpoint-label finetune_phase4-freeze --original-experiment  0729_pushreal_weights_cmekf_sm_1_trainunimodal  --experiment-name 0729_pushreal_weights_cmekf_sm_6_freezedyn
-
-# python scripts/push_task/train_weights.py --checkpoint-label phase3-force --original-experiment 0728_pushreal_cmekf_0 --experiment-name 0729_pushreal_weights_cmekf_sm_2_trainlonger

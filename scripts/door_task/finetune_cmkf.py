@@ -54,6 +54,8 @@ if args.unimodal:
 
     filter_model: diffbayes.base.Filter = crossmodal.door_models.DoorUnimodalKalmanFilter()
     buddy.attach_model(filter_model)
+    buddy.metadata["model_type"] = "DoorUnimodalKalmanFilter"
+    buddy.add_metadata({"model_type":  "DoorUnimodalKalmanFilter"})
     buddy.load_checkpoint_module(
         source="filter_models",
         target="filter_models",
@@ -188,8 +190,8 @@ elif isinstance(filter_model, crossmodal.door_models.DoorUnimodalKalmanFilter):
     eval_helpers.log_eval()
     buddy.save_checkpoint("finetune_phase4-length3")
 
-    buddy.set_regularization_weight(optimizer_name="train_filter_recurrent", value=0.0001)
-
+    # buddy.set_regularization_weight(optimizer_name="train_filter_recurrent", value=0.0001)
+    #
     for _ in range(3):
         train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,
                                 measurement_initialize=False)

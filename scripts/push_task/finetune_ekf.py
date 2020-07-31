@@ -209,7 +209,7 @@ elif isinstance(filter_model, crossmodal.push_models.PushUnimodalKalmanFilter):
     eval_helpers.log_eval()
     buddy.save_checkpoint("finetune_phase4-length3")
 
-    buddy.set_regularization_weight(optimizer_name="train_filter_recurrent", value=0.0001)
+    # buddy.set_regularization_weight(optimizer_name="train_filter_recurrent", value=0.0001)
 
     for _ in range(3):
         train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,
