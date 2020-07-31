@@ -113,13 +113,6 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
             nn.Linear(units, modality_count * self.state_dim),
         )
 
-        for m in self.modules():
-            if type(m) == nn.Linear:
-                nn.init.uniform_(m.weight)
-            if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-                nn.init.kaiming_normal_(m.weight.data)
-                if m.bias is not None:
-                    m.bias.data.zero_()
 
     def forward(self, *, observations: types.ObservationsTorch) -> torch.Tensor:
         """Compute modality weights.

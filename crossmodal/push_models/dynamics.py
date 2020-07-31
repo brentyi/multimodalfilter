@@ -62,5 +62,3 @@ class PushDynamicsModel(diffbayes.base.DynamicsModel):
         scale_trils = self.Q_scale_tril[None, :, :].expand(N, state_dim, state_dim)
         return states_new, scale_trils
 
-
-# RuntimeError: size mismatch, m1: [40 x 64], m2: [128 x 64] at /tmp/pip-req-build-58y_cjjl/aten/src/THC/generic/THCTensorMathBlas.cu:273
