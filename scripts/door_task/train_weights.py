@@ -247,6 +247,39 @@ if isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter):
         print("kalman e2e")
         buddy.save_checkpoint("phase6-done")
 
+    elif args.curriculum == 2:
+        fannypack.utils.unfreeze_module(filter_model)
+        train_helpers.train_cm_e2e(subsequence_length=3, epochs=5,
+                                   batch_size=32, measurement_initialize=False,
+                                   )
+        eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length3")
+
+        for _ in range(4):
+            train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
+                                       measurement_initialize=False, )
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length4")
+
+        for _ in range(4):
+            train_helpers.train_cm_e2e(subsequence_length=6, epochs=5, batch_size=32,
+                                       measurement_initialize=False,)
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length6")
+
+        for _ in range(4):
+            train_helpers.train_e2e(
+                subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
+            )
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase5-oneloss")
+
+
+
 else:
     assert False, "No training curriculum found for model type"
 

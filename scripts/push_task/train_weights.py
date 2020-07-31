@@ -21,6 +21,7 @@ parser.add_argument("--checkpoint-label", type=str, default=None)
 parser.add_argument("--save", action="store_true")
 parser.add_argument("--original-experiment", type=str, default=None)
 parser.add_argument("--weighting_type", type=str, default="softmax", choices=["softmax", "absolute"])
+parser.add_argument("--curriculum", type=int, default=0)
 
 Task.add_dataset_arguments(parser)
 # Parse args
@@ -60,6 +61,9 @@ buddy.load_checkpoint_module(
     experiment_name=args.original_experiment
 )
 
+
+buddy.add_metadata({"curriculum": args.curriculum})
+buddy.add_metadata({"original_experiment": args.original_experiment})
 
 
 # Load trajectories into memory
@@ -245,6 +249,38 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
         eval_helpers.log_eval()
         print("kalman e2e")
         buddy.save_checkpoint("phase6-done")
+
+    elif args.curriculum == 2:
+        fannypack.utils.unfreeze_module(filter_model)
+        train_helpers.train_cm_e2e(subsequence_length=3, epochs=5,
+                                   batch_size=32, measurement_initialize=False,
+                                   )
+        eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length3")
+
+        for _ in range(4):
+            train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
+                                       measurement_initialize=False, )
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length4")
+
+        for _ in range(4):
+            train_helpers.train_cm_e2e(subsequence_length=6, epochs=5, batch_size=32,
+                                       measurement_initialize=False, )
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length6")
+
+        for _ in range(4):
+            train_helpers.train_e2e(
+                subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
+            )
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase5-oneloss")
+
 
 
 else:
