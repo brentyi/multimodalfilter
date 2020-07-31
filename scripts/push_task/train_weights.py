@@ -48,7 +48,7 @@ else:
     except:
         print("missing metadata")
 
-filter_model: diffbayes.base.Filter = crossmodal.push_models.model_types[model_type]()
+filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
 buddy.attach_model(filter_model)
 
 # buddy.load_checkpoint(experiment_name=args.original_experiment, label=args.checkpoint_label)
@@ -81,65 +81,170 @@ if isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter):
     force_model = filter_model.filter_models[1]
     filter_model.enabled_models = [True, True]
 
-    fannypack.utils.unfreeze_module(filter_model.crossmodal_weight_model)
-    fannypack.utils.freeze_module(filter_model.filter_models)
+    if args.curriculum == 0:
 
-    train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
-                            optimizer_name="freeze_ekf")
-    eval_helpers.log_eval()
+        fannypack.utils.unfreeze_module(filter_model.crossmodal_weight_model)
+        fannypack.utils.freeze_module(filter_model.filter_models)
 
-    train_helpers.train_cm_e2e(subsequence_length=8, epochs=5, batch_size=32,
-                            optimizer_name="freeze_ekf")
-    eval_helpers.log_eval()
-
-    train_helpers.train_cm_e2e(subsequence_length=16, epochs=5, batch_size=32,
-                            optimizer_name="freeze_ekf")
-
-    # Train with weights frozen
-    fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
-    fannypack.utils.unfreeze_module(filter_model.filter_models)
-
-    train_helpers.train_cm_e2e(subsequence_length=3, epochs=5,
-                               batch_size=32, measurement_initialize=False,
-                               optimizer_name="freeze_weights")
-    eval_helpers.log_eval()
-
-    buddy.save_checkpoint("phase4-length3")
-
-    for _ in range(3):
         train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
-                                   measurement_initialize=False, optimizer_name="freeze_weights")
+                                optimizer_name="freeze_ekf")
         eval_helpers.log_eval()
 
-    buddy.save_checkpoint("phase4-length4")
-
-    for _ in range(2):
-        train_helpers.train_cm_e2e(subsequence_length=6, epochs=5, batch_size=32,
-                                   measurement_initialize=False, optimizer_name="freeze_weights")
+        train_helpers.train_cm_e2e(subsequence_length=8, epochs=5, batch_size=32,
+                                optimizer_name="freeze_ekf")
         eval_helpers.log_eval()
 
-    buddy.save_checkpoint("phase4-length6")
+        train_helpers.train_cm_e2e(subsequence_length=16, epochs=5, batch_size=32,
+                                optimizer_name="freeze_ekf")
 
-    # Train everything end to end
-    fannypack.utils.unfreeze_module(filter_model)
-    for _ in range(2):
-        train_helpers.train_cm_e2e(
-            subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
-        )
+        # Train with weights frozen
+        fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
+        fannypack.utils.unfreeze_module(filter_model.filter_models)
+
+        train_helpers.train_cm_e2e(subsequence_length=3, epochs=5,
+                                   batch_size=32, measurement_initialize=False,
+                                   optimizer_name="freeze_weights")
         eval_helpers.log_eval()
 
-    buddy.save_checkpoint("phase5-length6")
+        buddy.save_checkpoint("phase4-length3")
 
-    for _ in range(2):
-        train_helpers.train_e2e(
-            subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
-        )
+        for _ in range(3):
+            train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
+                                       measurement_initialize=False, optimizer_name="freeze_weights")
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length4")
+
+        for _ in range(2):
+            train_helpers.train_cm_e2e(subsequence_length=6, epochs=5, batch_size=32,
+                                       measurement_initialize=False, optimizer_name="freeze_weights")
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length6")
+
+        # Train everything end to end
+        fannypack.utils.unfreeze_module(filter_model)
+        for _ in range(2):
+            train_helpers.train_cm_e2e(
+                subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
+            )
+            eval_helpers.log_eval()
+        buddy.save_checkpoint("phase5-length6")
+
+        # train using one loss
+        for _ in range(2):
+            train_helpers.train_e2e(
+                subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
+            )
+            eval_helpers.log_eval()
+
+        eval_helpers.log_eval()
+        print("kalman e2e")
+        buddy.save_checkpoint("phase5-done")
+
+    elif args.curriculum == 1:
+
+        fannypack.utils.unfreeze_module(filter_model.crossmodal_weight_model)
+        fannypack.utils.freeze_module(filter_model.filter_models)
+
+        train_helpers.train_cm_e2e(subsequence_length=4, epochs=2, batch_size=32,
+                                   optimizer_name="freeze_ekf")
         eval_helpers.log_eval()
 
-    eval_helpers.log_eval()
-    print("kalman e2e")
+        train_helpers.train_cm_e2e(subsequence_length=8, epochs=2, batch_size=32,
+                                   optimizer_name="freeze_ekf")
+        eval_helpers.log_eval()
 
-    buddy.save_checkpoint("phase5-done")
+        train_helpers.train_cm_e2e(subsequence_length=16, epochs=2, batch_size=32,
+                                   optimizer_name="freeze_ekf")
+
+        # Train with weights frozen
+        fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
+        fannypack.utils.unfreeze_module(filter_model.filter_models)
+
+        train_helpers.train_cm_e2e(subsequence_length=3, epochs=2,
+                                   batch_size=32, measurement_initialize=False,
+                                   optimizer_name="freeze_weights")
+        eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length3")
+
+        for _ in range(3):
+            train_helpers.train_cm_e2e(subsequence_length=4, epochs=2, batch_size=32,
+                                       measurement_initialize=False, optimizer_name="freeze_weights")
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length4")
+
+        for _ in range(2):
+            train_helpers.train_cm_e2e(subsequence_length=6, epochs=2, batch_size=32,
+                                       measurement_initialize=False, optimizer_name="freeze_weights")
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase4-length6")
+
+        # retrain weights again
+
+        fannypack.utils.unfreeze_module(filter_model.crossmodal_weight_model)
+        fannypack.utils.freeze_module(filter_model.filter_models)
+        train_helpers.train_cm_e2e(subsequence_length=4, epochs=2, batch_size=32,
+                                   optimizer_name="freeze_ekf")
+        eval_helpers.log_eval()
+
+        train_helpers.train_cm_e2e(subsequence_length=8, epochs=2, batch_size=32,
+                                   optimizer_name="freeze_ekf")
+        eval_helpers.log_eval()
+
+        train_helpers.train_cm_e2e(subsequence_length=16, epochs=2, batch_size=32,
+                                   optimizer_name="freeze_ekf")
+
+        buddy.save_checkpoint("phase4.5-freezeweights2")
+
+        # Train with weights frozen
+        fannypack.utils.freeze_module(filter_model.crossmodal_weight_model)
+        fannypack.utils.unfreeze_module(filter_model.filter_models)
+
+        train_helpers.train_cm_e2e(subsequence_length=3, epochs=5,
+                                   batch_size=32, measurement_initialize=False,
+                                   optimizer_name="freeze_weights")
+        eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase5-length3")
+
+        for _ in range(3):
+            train_helpers.train_cm_e2e(subsequence_length=4, epochs=5, batch_size=32,
+                                       measurement_initialize=False, optimizer_name="freeze_weights")
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase5-length4")
+
+        for _ in range(2):
+            train_helpers.train_cm_e2e(subsequence_length=6, epochs=5, batch_size=32,
+                                       measurement_initialize=False, optimizer_name="freeze_weights")
+            eval_helpers.log_eval()
+
+        buddy.save_checkpoint("phase5-length6")
+
+
+        # Train everything end to end
+        fannypack.utils.unfreeze_module(filter_model)
+        for _ in range(2):
+            train_helpers.train_cm_e2e(
+                subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
+            )
+            eval_helpers.log_eval()
+        buddy.save_checkpoint("phase6-length6")
+
+        # train using one loss
+        for _ in range(2):
+            train_helpers.train_e2e(
+                subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
+            )
+            eval_helpers.log_eval()
+
+        eval_helpers.log_eval()
+        print("kalman e2e")
+        buddy.save_checkpoint("phase6-done")
 
 
 else:
