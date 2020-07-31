@@ -62,6 +62,7 @@ buddy.add_metadata(
 if isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
 
     learning_rate = 1e-5
+    buddy._optimizer_dict.clear()
 
     def warmup_lr(optimizer_name="train_filter_recurrent", warmup_steps=100):
         start_steps = buddy.optimizer_steps
@@ -84,6 +85,7 @@ if isinstance(filter_model, crossmodal.door_models.DoorParticleFilter):
     # Make sure measurement model is unfrozen
     fannypack.utils.unfreeze_module(measurement_model)
 
+    filter_model.dynamics_model.Q_scale_tril_diag.requires_grad = True
 
     # Train with unfrozen measurement models
     eval_helpers.log_eval()

@@ -2,7 +2,7 @@ import diffbayes
 
 from ..base_models import CrossmodalParticleFilterMeasurementModel
 from ..tasks import DoorTask
-from .dynamics import DoorDynamicsModel
+from .dynamics import DoorDynamicsModelBrent
 from .pf import DoorMeasurementModel
 
 
@@ -12,7 +12,7 @@ class DoorUnimodalParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter)
         """
 
         super().__init__(
-            dynamics_model=DoorDynamicsModel(),
+            dynamics_model=DoorDynamicsModelBrent(),
             measurement_model=CrossmodalParticleFilterMeasurementModel(
                 measurement_models=[
                     DoorMeasurementModel(modalities={"image"}),

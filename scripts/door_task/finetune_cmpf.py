@@ -83,6 +83,8 @@ if isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilter)
             value=lambda steps: min(1e-4, (steps - start_steps) / warmup_steps * 1e-4),
         )
 
+    buddy._optimizer_dict.clear()
+
     # Train with unfrozen measurement models
     eval_helpers.log_eval()
     # warmup_lr()
