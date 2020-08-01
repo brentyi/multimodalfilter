@@ -30,13 +30,10 @@ filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
 buddy.attach_model(filter_model)
 buddy.load_checkpoint(label=args.checkpoint_label)
 
-# Load trajectories using experiment metadata
-eval_trajectories = Task.get_eval_trajectories(**dataset_args)
-
 # Run eval
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
-eval_results = eval_helpers.run_eval(measurement_initialize=args.measurement_init)
+eval_helpers.configure(buddy=buddy, task=Task, dataset_args=dataset_args)
+eval_results = eval_helpers.run_eval_stats(measurement_initialize=args.measurement_init)
 
 # Save eval results
 if args.save:
