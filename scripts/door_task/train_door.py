@@ -3,8 +3,9 @@ import dataclasses
 import datetime
 from typing import cast
 
-import crossmodal
 import fannypack
+
+import crossmodal
 from crossmodal.base_models import (
     CrossmodalKalmanFilterMeasurementModel,
     CrossmodalParticleFilterMeasurementModel,
@@ -15,7 +16,9 @@ Task = crossmodal.tasks.DoorTask
 
 # Parse args
 parser = argparse.ArgumentParser()
-parser.add_argument("--model-type", type=str, required=True, choices=Task.model_types.keys())
+parser.add_argument(
+    "--model-type", type=str, required=True, choices=Task.model_types.keys()
+)
 parser.add_argument("--experiment-name", type=str, required=True)
 parser.add_argument("--notes", type=str, default="(none)")
 Task.add_dataset_arguments(parser)
@@ -116,7 +119,9 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalParticleFilte
     # train_helpers.train_pf_dynamics_recurrent(subsequence_length=8, epochs=5)
     # train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
     # buddy.save_checkpoint("phase1")
-    buddy.load_checkpoint_module("dynamics_model", experiment_name="pf_blackout0.0_q_tune")
+    buddy.load_checkpoint_module(
+        "dynamics_model", experiment_name="pf_blackout0.0_q_tune"
+    )
     train_helpers.train_pf_dynamics_recurrent(subsequence_length=16, epochs=5)
     buddy.save_checkpoint("phase1")
 
@@ -335,8 +340,9 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     # Train everything end-to-end
     fannypack.utils.unfreeze_module(filter_model.filter_models)
 
-    train_helpers.train_e2e(subsequence_length=3, epochs=5,
-                            batch_size=32, measurement_initialize=False)
+    train_helpers.train_e2e(
+        subsequence_length=3, epochs=5, batch_size=32, measurement_initialize=False
+    )
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length3")
 
@@ -345,16 +351,18 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     )
 
     for _ in range(3):
-        train_helpers.train_e2e(subsequence_length=4, epochs=5, batch_size=32,
-                                measurement_initialize=False)
+        train_helpers.train_e2e(
+            subsequence_length=4, epochs=5, batch_size=32, measurement_initialize=False
+        )
 
         eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length4")
 
     for _ in range(2):
 
-        train_helpers.train_e2e(subsequence_length=6, epochs=5, batch_size=32,
-                                measurement_initialize=False)
+        train_helpers.train_e2e(
+            subsequence_length=6, epochs=5, batch_size=32, measurement_initialize=False
+        )
 
         eval_helpers.log_eval()
         print("kalman e2e")

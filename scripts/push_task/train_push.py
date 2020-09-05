@@ -2,8 +2,9 @@ import argparse
 import datetime
 from typing import cast
 
-import crossmodal
 import fannypack
+
+import crossmodal
 from crossmodal.base_models import (
     CrossmodalKalmanFilterMeasurementModel,
     CrossmodalParticleFilterMeasurementModel,

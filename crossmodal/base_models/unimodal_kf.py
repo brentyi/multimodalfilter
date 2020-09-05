@@ -1,19 +1,16 @@
 import abc
 from typing import List
 
+import diffbayes
 import numpy as np
 import torch
 import torch.nn as nn
-
-import diffbayes
 from diffbayes import types
 
 from .utility import weighted_average
 
 
-class UnimodalKalmanFilterMeasurementModel(
-    diffbayes.base.KalmanFilterMeasurementModel
-):
+class UnimodalKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementModel):
     """Utility class for merging unimodal measurement models via unimodal weighting.
     """
 
@@ -57,9 +54,7 @@ class UnimodalKalmanFilterMeasurementModel(
         # Assign value
         self._enabled_models = enabled_models
 
-    def forward(
-        self, *, observations: types.ObservationsTorch
-    ) -> types.StatesTorch:
+    def forward(self, *, observations: types.ObservationsTorch) -> types.StatesTorch:
         """Observation model forward pass, over batch size `N`.
         For each member of a batch, we expect one unique observation.
 
@@ -73,56 +68,54 @@ class UnimodalKalmanFilterMeasurementModel(
         N = observations[[*observations][0]].shape[0]
 
         model_list = [
-            (measurement_model(observations=observations)) for i, measurement_model
-            in enumerate(self.measurement_models) if self._enabled_models[i]
+            (measurement_model(observations=observations))
+            for i, measurement_model in enumerate(self.measurement_models)
+            if self._enabled_models[i]
         ]
 
-        unimodal_states = torch.stack(
-            [x[0] for x in model_list]
-        )
-        unimodal_covariances = torch.stack(
-            [x[1] for x in model_list]
-        )
+        unimodal_states = torch.stack([x[0] for x in model_list])
+        unimodal_covariances = torch.stack([x[1] for x in model_list])
 
         if np.sum(self._enabled_models) == 1:
             weighted_states = unimodal_states[0]
             weighted_covariances = unimodal_covariances[0]
         else:
-            unimodal_precision = torch.stack(
-                [1./(x[1] + 1e-9) for x in model_list]
+            unimodal_precision = torch.stack([1.0 / (x[1] + 1e-9) for x in model_list])
+
+            assert unimodal_states.shape == (
+                np.sum(self._enabled_models),
+                N,
+                self.state_dim,
+            )
+            assert unimodal_covariances.shape == (
+                np.sum(self._enabled_models),
+                N,
+                self.state_dim,
+                self.state_dim,
             )
 
-            assert unimodal_states.shape == (np.sum(self._enabled_models), N, self.state_dim,)
-            assert unimodal_covariances.shape == (np.sum(self._enabled_models),
-                                                              N,
-                                                              self.state_dim,
-                                                              self.state_dim)
-
-            unimodal_weights = torch.diagonal(unimodal_precision, dim1=-2, dim2=-1).squeeze(1)
+            unimodal_weights = torch.diagonal(
+                unimodal_precision, dim1=-2, dim2=-1
+            ).squeeze(1)
             assert unimodal_weights.shape == unimodal_states.shape
 
             weighted_states = weighted_average(unimodal_states, unimodal_weights)
-            weighted_covariances = torch.inverse(torch.sum(unimodal_precision, dim=0)+1e-9)
+            weighted_covariances = torch.inverse(
+                torch.sum(unimodal_precision, dim=0) + 1e-9
+            )
 
         assert weighted_states.shape == (N, self.state_dim,)
-        assert weighted_covariances.shape == (N,
-                                              self.state_dim,
-                                              self.state_dim)
+        assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)
 
         return weighted_states, weighted_covariances
 
 
-class UnimodalKalmanFilter(
-    diffbayes.base.Filter
-):
+class UnimodalKalmanFilter(diffbayes.base.Filter):
     """Utility class for merging unimodal kalman filter models via crossmodal weighting.
     """
 
     def __init__(
-            self,
-            *,
-            filter_models: List[diffbayes.base.KalmanFilter],
-            state_dim: int,
+        self, *, filter_models: List[diffbayes.base.KalmanFilter], state_dim: int,
     ):
         super().__init__(state_dim=state_dim)
 
@@ -160,8 +153,7 @@ class UnimodalKalmanFilter(
         self._enabled_models = enabled_models
 
     def forward(
-            self, *, observations: types.ObservationsTorch,
-            controls: types.ControlsTorch,
+        self, *, observations: types.ObservationsTorch, controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         """Kalman filter with unimodal weights forward pass, single timestep.
 
@@ -177,15 +169,21 @@ class UnimodalKalmanFilter(
 
         N, _ = controls.shape
 
-        unimodal_states = torch.stack([
-            (filter_model(observations=observations, controls=controls)) for i, filter_model
-            in enumerate(self.filter_models) if self._enabled_models[i]
-        ])
+        unimodal_states = torch.stack(
+            [
+                (filter_model(observations=observations, controls=controls))
+                for i, filter_model in enumerate(self.filter_models)
+                if self._enabled_models[i]
+            ]
+        )
 
-        unimodal_covariances = torch.stack([
-            filter_model.state_covariance_estimate for i, filter_model
-            in enumerate(self.filter_models) if self._enabled_models[i]
-        ])
+        unimodal_covariances = torch.stack(
+            [
+                filter_model.state_covariance_estimate
+                for i, filter_model in enumerate(self.filter_models)
+                if self._enabled_models[i]
+            ]
+        )
 
         if np.sum(self._enabled_models) == 1:
             weighted_states = unimodal_states[0]
@@ -195,33 +193,46 @@ class UnimodalKalmanFilter(
 
             unimodal_precision = torch.stack(
                 [
-                    torch.inverse(filter_model.state_covariance_estimate+1e-9) for i, filter_model
-                    in enumerate(self.filter_models) if self._enabled_models[i]
+                    torch.inverse(filter_model.state_covariance_estimate + 1e-9)
+                    for i, filter_model in enumerate(self.filter_models)
+                    if self._enabled_models[i]
                 ]
             )
 
-            assert unimodal_states.shape == (np.sum(self._enabled_models), N, self.state_dim,)
-            assert unimodal_covariances.shape == (np.sum(self._enabled_models),
-                                                              N,
-                                                              self.state_dim,
-                                                              self.state_dim)
+            assert unimodal_states.shape == (
+                np.sum(self._enabled_models),
+                N,
+                self.state_dim,
+            )
+            assert unimodal_covariances.shape == (
+                np.sum(self._enabled_models),
+                N,
+                self.state_dim,
+                self.state_dim,
+            )
 
-            weighted_covariances = torch.inverse(torch.sum(unimodal_precision, dim=0)+1e-9)
+            weighted_covariances = torch.inverse(
+                torch.sum(unimodal_precision, dim=0) + 1e-9
+            )
 
             unimodal_states_reshaped = unimodal_states.reshape(-1, self.state_dim, 1)
-            unimodal_precision_reshaped = unimodal_precision.reshape(-1, self.state_dim, self.state_dim)
+            unimodal_precision_reshaped = unimodal_precision.reshape(
+                -1, self.state_dim, self.state_dim
+            )
 
             weighted_states_unnormalized = torch.sum(
                 unimodal_precision_reshaped.bmm(unimodal_states_reshaped).reshape(
-                    np.sum(self._enabled_models), N, self.state_dim, 1),
-                dim=0)
+                    np.sum(self._enabled_models), N, self.state_dim, 1
+                ),
+                dim=0,
+            )
 
-            weighted_states = weighted_covariances.bmm(weighted_states_unnormalized).squeeze(-1)
+            weighted_states = weighted_covariances.bmm(
+                weighted_states_unnormalized
+            ).squeeze(-1)
 
         assert weighted_states.shape == (N, self.state_dim,)
-        assert weighted_covariances.shape == (N,
-                                              self.state_dim,
-                                              self.state_dim)
+        assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)
 
         return weighted_states
 

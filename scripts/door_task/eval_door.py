@@ -1,9 +1,10 @@
 import argparse
 import dataclasses
 
-import crossmodal
 import diffbayes
 import fannypack
+
+import crossmodal
 
 Task = crossmodal.tasks.DoorTask
 

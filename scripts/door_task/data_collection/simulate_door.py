@@ -1,14 +1,13 @@
 import argparse
 import time
 
+import fannypack
 import matplotlib.pyplot as plt
 import numpy as np
-from tqdm.auto import tqdm
-
-import fannypack
 import robosuite
 import waypoint_policies
 from robosuite.wrappers import IKWrapper
+from tqdm.auto import tqdm
 
 if __name__ == "__main__":
 

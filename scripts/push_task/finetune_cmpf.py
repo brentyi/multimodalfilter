@@ -8,9 +8,10 @@ import dataclasses
 import datetime
 from typing import cast
 
-import crossmodal
 import diffbayes
 import fannypack
+
+import crossmodal
 from crossmodal.base_models import CrossmodalParticleFilterMeasurementModel
 
 Task = crossmodal.tasks.PushTask

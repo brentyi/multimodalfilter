@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 from fannypack.nn import resblocks
 
 state_dim = 2

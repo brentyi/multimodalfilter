@@ -1,11 +1,10 @@
 import abc
 from typing import List, Optional
 
+import diffbayes
 import numpy as np
 import torch
 import torch.nn as nn
-
-import diffbayes
 from diffbayes import types
 
 
@@ -126,9 +125,9 @@ class CrossmodalParticleFilterMeasurementModel(
             unimodal_log_likelihoods_norm = torch.zeros_like(unimodal_log_likelihoods)
             for i in range(unimodal_log_likelihoods.shape[2]):
                 source = unimodal_log_likelihoods[:, :, i]
-                unimodal_log_likelihoods_norm[:, :, i] = source - torch.max(
-                    source, dim=1, keepdim=True
-                )[0]
+                unimodal_log_likelihoods_norm[:, :, i] = (
+                    source - torch.max(source, dim=1, keepdim=True)[0]
+                )
 
             # Weight particle likelihoods by modality & return
             particle_log_likelihoods = torch.logsumexp(

@@ -8,10 +8,10 @@ import dataclasses
 import datetime
 from typing import cast
 
+import diffbayes
 import fannypack
 
 import crossmodal
-import diffbayes
 
 Task = crossmodal.tasks.DoorTask
 

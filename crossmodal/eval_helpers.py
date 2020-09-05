@@ -1,10 +1,9 @@
 from typing import Dict, List, Type, cast
 
-import numpy as np
-import torch
-
 import diffbayes
 import fannypack
+import numpy as np
+import torch
 
 from . import tasks
 
@@ -16,10 +15,7 @@ dataset_args: Dict
 
 
 def configure(
-    *,
-    buddy: fannypack.utils.Buddy,
-    task: Type[tasks.Task],
-    dataset_args: Dict,
+    *, buddy: fannypack.utils.Buddy, task: Type[tasks.Task], dataset_args: Dict,
 ):
     """Configure global settings for eval helpers.
     """
@@ -39,6 +35,7 @@ def log_eval(measurement_initialize=False) -> None:
         for key, value in results.items():
             if type(value) == float:
                 buddy.log_scalar(key, value)
+
 
 def run_eval_stats(*eval_args, **eval_kwargs) -> Dict[str, float]:
     all_results: Dict[str, List[float]] = {}

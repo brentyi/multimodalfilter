@@ -1,12 +1,12 @@
 import argparse
 import dataclasses
 
+import diffbayes
 import fannypack
 import numpy as np
 import torch
 
 import crossmodal
-import diffbayes
 
 Task = crossmodal.tasks.DoorTask
 

@@ -1,10 +1,9 @@
 from typing import Set, cast
 
-import torch
-import torch.nn as nn
-
 import diffbayes
 import diffbayes.types as types
+import torch
+import torch.nn as nn
 from fannypack.nn import resblocks
 
 from ..tasks import PushTask

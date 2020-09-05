@@ -2,10 +2,9 @@ import argparse
 import sys
 from typing import Any, Dict, List
 
-import numpy as np
-
 import diffbayes
 import fannypack
+import numpy as np
 
 from ._task import Task
 

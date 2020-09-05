@@ -1,10 +1,9 @@
 from typing import List, cast
 
-import numpy as np
-import torch.utils.data
-
 import diffbayes
 import fannypack
+import numpy as np
+import torch.utils.data
 
 # These need to externally set before training
 buddy: fannypack.utils.Buddy
@@ -49,7 +48,9 @@ def train_pf_dynamics_single_step(*, epochs, batch_size=32, model=None):
         )
 
 
-def train_pf_dynamics_recurrent(*, subsequence_length, epochs, batch_size=32, model=None):
+def train_pf_dynamics_recurrent(
+    *, subsequence_length, epochs, batch_size=32, model=None
+):
     assert isinstance(filter_model, diffbayes.base.Filter)
 
     if model is None:
@@ -95,8 +96,9 @@ def train_pf_measurement(*, epochs, batch_size, cov_scale=0.1):
         )
 
 
-def train_kf_measurement(*, epochs, batch_size=32, model=None,
-                         optimizer_name="train_measurement"):
+def train_kf_measurement(
+    *, epochs, batch_size=32, model=None, optimizer_name="train_measurement"
+):
 
     if model is None:
         model = filter_model
@@ -113,14 +115,20 @@ def train_kf_measurement(*, epochs, batch_size=32, model=None,
     )
     for _ in range(epochs):
         diffbayes.train.train_kalman_filter_measurement_model(
-            buddy, model.measurement_model, dataloader,
-            optimizer_name=optimizer_name,
+            buddy, model.measurement_model, dataloader, optimizer_name=optimizer_name,
         )
 
 
-def train_e2e(*, subsequence_length, epochs, batch_size=32, initial_cov_scale=0.1,
-              measurement_initialize=False, model=None,
-              optimizer_name="train_filter_recurrent"):
+def train_e2e(
+    *,
+    subsequence_length,
+    epochs,
+    batch_size=32,
+    initial_cov_scale=0.1,
+    measurement_initialize=False,
+    model=None,
+    optimizer_name="train_filter_recurrent",
+):
 
     if model is None:
         model = filter_model
@@ -143,7 +151,10 @@ def train_e2e(*, subsequence_length, epochs, batch_size=32, initial_cov_scale=0.
     )
     for _ in range(epochs):
         diffbayes.train.train_filter(
-            buddy, model, dataloader, initial_covariance=initial_covariance,
+            buddy,
+            model,
+            dataloader,
+            initial_covariance=initial_covariance,
             measurement_initialize=measurement_initialize,
-            optimizer_name=optimizer_name
+            optimizer_name=optimizer_name,
         )

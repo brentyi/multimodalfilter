@@ -1,8 +1,9 @@
 import argparse
 
-import crossmodal
 import diffbayes
 import fannypack
+
+import crossmodal
 
 Task = crossmodal.tasks.PushTask
 
@@ -34,9 +35,7 @@ buddy.load_checkpoint(label=args.checkpoint_label)
 
 # Run eval
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(
-    buddy=buddy, task=Task, dataset_args=dataset_args
-)
+eval_helpers.configure(buddy=buddy, task=Task, dataset_args=dataset_args)
 eval_results = eval_helpers.run_eval_stats(measurement_initialize=args.measurement_init)
 
 # Save eval results
