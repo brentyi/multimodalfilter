@@ -15,7 +15,7 @@ from .dynamics import PushDynamicsModel
 from .pf import PushMeasurementModel
 
 
-class PushCrossmodalParticleFilter(diffbayes.base.ParticleFilter, PushTask.Filter):
+class PushCrossmodalParticleFilter(diffbayes.filters.ParticleFilter, PushTask.Filter):
     def __init__(self, know_image_blackout: bool = False):
         """Initializes a particle filter for our door task.
         """

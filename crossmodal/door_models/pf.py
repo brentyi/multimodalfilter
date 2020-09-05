@@ -11,7 +11,7 @@ from . import layers
 from .dynamics import DoorDynamicsModelBrent
 
 
-class DoorParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter):
+class DoorParticleFilter(diffbayes.filters.ParticleFilter, DoorTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """

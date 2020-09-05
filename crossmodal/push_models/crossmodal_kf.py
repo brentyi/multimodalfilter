@@ -8,13 +8,13 @@ from fannypack.nn import resblocks
 
 from ..base_models import (
     CrossmodalKalmanFilter,
-    CrossmodalKalmanFilterMeasurementModel,
     CrossmodalKalmanFilterWeightModel,
+    CrossmodalVirtualSensorModel,
 )
 from ..tasks import PushTask
 from . import layers
 from .dynamics import PushDynamicsModel
-from .kf import PushKalmanFilter, PushKalmanFilterMeasurementModel
+from .kf import PushKalmanFilter, PushVirtualSensorModel
 
 
 class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
@@ -26,13 +26,11 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
             filter_models=[
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
-                    measurement_model=PushKalmanFilterMeasurementModel(
-                        modalities={"image"}
-                    ),
+                    virtual_sensor_model=PushVirtualSensorModel(modalities={"image"}),
                 ),
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
-                    measurement_model=PushKalmanFilterMeasurementModel(
+                    virtual_sensor_model=PushVirtualSensorModel(
                         modalities={"pos", "sensors"}
                     ),
                 ),
@@ -174,10 +172,10 @@ class PushMeasurementCrossmodalKalmanFilter(PushKalmanFilter):
 
         super().__init__(
             dynamics_model=PushDynamicsModel,
-            measurement_model=CrossmodalKalmanFilterMeasurementModel(
-                measurement_models=[
-                    PushKalmanFilterMeasurementModel(modalities={"image"}),
-                    PushKalmanFilterMeasurementModel(modalities={"pos", "sensors"}),
+            virtual_sensor_model=CrossmodalVirtualSensorModel(
+                virtual_sensor_model=[
+                    PushVirtualSensorModel(modalities={"image"}),
+                    PushVirtualSensorModel(modalities={"pos", "sensors"}),
                 ],
                 crossmodal_weight_model=PushCrossmodalKalmanFilterWeightModel(
                     state_dim=2

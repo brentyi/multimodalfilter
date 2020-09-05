@@ -1,4 +1,4 @@
-from typing import Set, cast
+from typing import Set, Tuple, cast
 
 import diffbayes
 import diffbayes.types as types
@@ -11,22 +11,25 @@ from . import layers
 from .dynamics import DoorDynamicsModel
 
 
-class DoorKalmanFilter(diffbayes.base.KalmanFilter, DoorTask.Filter):
-    def __init__(self, dynamics_model=None, measurement_model=None):
+class DoorKalmanFilter(
+    diffbayes.filters.VirtualSensorExtendedKalmanFilter, DoorTask.Filter
+):
+    def __init__(self, dynamics_model=None, virtual_sensor_model=None):
         """Initializes a particle filter for our door task.
         """
-        if dynamics_model is None and measurement_model is None:
+        if dynamics_model is None and virtual_sensor_model is None:
             super().__init__(
                 dynamics_model=DoorDynamicsModel(),
-                measurement_model=DoorKalmanFilterMeasurementModel(),
+                virtual_sensor_model=DoorVirtualSensorModel(),
             )
         else:
             super().__init__(
-                dynamics_model=dynamics_model, measurement_model=measurement_model,
+                dynamics_model=dynamics_model,
+                virtual_sensor_model=virtual_sensor_model,
             )
 
 
-class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementModel):
+class DoorVirtualSensorModel(diffbayes.base.VirtualSensorModel):
     def __init__(
         self,
         units: int = 64,
@@ -76,7 +79,9 @@ class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
         self.units = units
         self.add_R_noise = torch.ones(self.state_dim) * add_R_noise
 
-    def forward(self, *, observations: types.ObservationsTorch) -> types.StatesTorch:
+    def forward(
+        self, *, observations: types.ObservationsTorch
+    ) -> Tuple[types.StatesTorch, types.ScaleTrilTorch]:
         assert type(observations) == dict
         observations = cast(types.TorchDict, observations)
 
@@ -119,4 +124,4 @@ class DoorKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementMod
                 measurement_covariance.device
             )
 
-        return measurement_prediction, measurement_covariance
+        return measurement_prediction, torch.sqrt(measurement_covariance)

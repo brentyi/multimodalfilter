@@ -5,8 +5,8 @@ import diffbayes as _diffbayes
 from .crossmodal_kf import (
     PushCrossmodalKalmanFilter,
     PushCrossmodalKalmanFilterWeightModel,
-    PushKalmanFilterMeasurementModel,
     PushMeasurementCrossmodalKalmanFilter,
+    PushVirtualSensorModel,
 )
 from .crossmodal_pf import (
     PushCrossmodalParticleFilter,
@@ -14,7 +14,7 @@ from .crossmodal_pf import (
     PushCrossmodalWeightModel,
 )
 from .dynamics import PushDynamicsModel
-from .kf import PushKalmanFilter, PushKalmanFilterMeasurementModel
+from .kf import PushKalmanFilter, PushVirtualSensorModel
 from .lstm import PushLSTMFilter
 from .pf import PushMeasurementModel, PushParticleFilter
 from .unimodal_kf import PushMeasurementUnimodalKalmanFilter, PushUnimodalKalmanFilter

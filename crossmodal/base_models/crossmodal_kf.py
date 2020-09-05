@@ -1,5 +1,5 @@
 import abc
-from typing import List
+from typing import List, Tuple
 
 import diffbayes
 import numpy as np
@@ -44,7 +44,7 @@ class CrossmodalKalmanFilter(diffbayes.base.Filter):
     def __init__(
         self,
         *,
-        filter_models: List[diffbayes.base.KalmanFilter],
+        filter_models: List[diffbayes.filters.VirtualSensorExtendedKalmanFilter],
         crossmodal_weight_model: CrossmodalKalmanFilterWeightModel,
         state_dim: int,
     ):
@@ -208,13 +208,16 @@ class CrossmodalKalmanFilter(diffbayes.base.Filter):
         N = observations[[*observations][0]].shape[0]
 
         model_list = [
-            filter_model.measurement_model(observations=observations)
+            filter_model.virtual_sensor_model(observations=observations)
             for i, filter_model in enumerate(self.filter_models)
             if self._enabled_models[i]
         ]
 
         unimodal_states = torch.stack([x[0] for x in model_list])
-        unimodal_covariances = torch.stack([x[1] for x in model_list])
+        unimodal_scale_trils = torch.stack([x[1] for x in model_list])
+        unimodal_covariances = unimodal_scale_trils @ unimodal_scale_trils.transpose(
+            -1, -2
+        )
 
         state_weights = self.crossmodal_weight_model(observations=observations)
         state_weights = state_weights[self._enabled_models]
@@ -236,29 +239,27 @@ class CrossmodalKalmanFilter(diffbayes.base.Filter):
         self.initialize_beliefs(mean=weighted_states, covariance=weighted_covariances)
 
 
-class CrossmodalKalmanFilterMeasurementModel(
-    diffbayes.base.KalmanFilterMeasurementModel
-):
+class CrossmodalVirtualSensorModel(diffbayes.base.VirtualSensorModel):
     """Utility class for merging unimodal measurement models via crossmodal weighting.
     """
 
     def __init__(
         self,
         *,
-        measurement_models: List[diffbayes.base.KalmanFilterMeasurementModel],
+        virtual_sensor_model: List[diffbayes.base.VirtualSensorModel],
         crossmodal_weight_model: CrossmodalKalmanFilterWeightModel,
         state_dim: int,
     ):
         super().__init__(state_dim=state_dim)
 
-        self.measurement_models = nn.ModuleList(measurement_models)
+        self.virtual_sensor_model = nn.ModuleList(virtual_sensor_model)
         """ nn.ModuleList: List of measurement models. """
 
         self.crossmodal_weight_model = crossmodal_weight_model
         """ crossmodal.base_models.CrossmodalKalmanFilterWeightModel: Crossmodal
         weight model; should output one weight per measurement model. """
 
-        self._enabled_models: List[bool] = [True for _ in self.measurement_models]
+        self._enabled_models: List[bool] = [True for _ in self.virtual_sensor_model]
 
     @property
     def enabled_models(self) -> List[bool]:
@@ -280,14 +281,16 @@ class CrossmodalKalmanFilterMeasurementModel(
 
         # Input validation
         assert isinstance(enabled_models, list)
-        assert len(enabled_models) == len(self.measurement_models)
+        assert len(enabled_models) == len(self.virtual_sensor_model)
         for x in enabled_models:
             assert type(x) == bool
 
         # Assign value
         self._enabled_models = enabled_models
 
-    def forward(self, *, observations: types.ObservationsTorch) -> types.StatesTorch:
+    def forward(
+        self, *, observations: types.ObservationsTorch
+    ) -> Tuple[types.StatesTorch, types.ScaleTrilTorch]:
         """Observation model forward pass, over batch size `N`.
         For each member of a batch, we expect one unique observation.
 
@@ -301,13 +304,16 @@ class CrossmodalKalmanFilterMeasurementModel(
         N = observations[[*observations][0]].shape[0]
 
         model_list = [
-            (measurement_model(observations=observations))
-            for i, measurement_model in enumerate(self.measurement_models)
+            (virtual_sensor_model(observations=observations))
+            for i, virtual_sensor_model in enumerate(self.virtual_sensor_model)
             if self._enabled_models[i]
         ]
 
         unimodal_states = torch.stack([x[0] for x in model_list])
-        unimodal_covariances = torch.stack([x[1] for x in model_list])
+        unimodal_scale_trils = torch.stack([x[1] for x in model_list])
+        unimodal_covariances = unimodal_scale_trils @ unimodal_scale_trils.transpose(
+            -1, -2
+        )
 
         assert unimodal_states.shape == (
             np.sum(self._enabled_models),
@@ -350,4 +356,4 @@ class CrossmodalKalmanFilterMeasurementModel(
         assert weighted_states.shape == (N, self.state_dim)
         assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)
 
-        return weighted_states, weighted_covariances
+        return weighted_states, torch.cholesky(weighted_covariances)

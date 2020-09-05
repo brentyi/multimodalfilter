@@ -15,7 +15,7 @@ from .dynamics import DoorDynamicsModelBrent
 from .pf import DoorMeasurementModel
 
 
-class DoorCrossmodalParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter):
+class DoorCrossmodalParticleFilter(diffbayes.filters.ParticleFilter, DoorTask.Filter):
     def __init__(self, know_image_blackout: bool = False):
         """Initializes a particle filter for our door task.
         """

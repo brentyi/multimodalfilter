@@ -8,13 +8,13 @@ from fannypack.nn import resblocks
 
 from ..base_models import (
     CrossmodalKalmanFilter,
-    CrossmodalKalmanFilterMeasurementModel,
     CrossmodalKalmanFilterWeightModel,
+    CrossmodalVirtualSensorModel,
 )
 from ..tasks import DoorTask
 from . import layers
 from .dynamics import DoorDynamicsModel
-from .kf import DoorKalmanFilter, DoorKalmanFilterMeasurementModel
+from .kf import DoorKalmanFilter, DoorVirtualSensorModel
 
 
 class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter, DoorTask.Filter):
@@ -26,13 +26,11 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter, DoorTask.Filter):
             filter_models=[
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
-                    measurement_model=DoorKalmanFilterMeasurementModel(
-                        modalities={"image"}
-                    ),
+                    virtual_sensor_model=DoorVirtualSensorModel(modalities={"image"}),
                 ),
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
-                    measurement_model=DoorKalmanFilterMeasurementModel(
+                    virtual_sensor_model=DoorVirtualSensorModel(
                         modalities={"pos", "sensors"}
                     ),
                 ),
@@ -174,10 +172,10 @@ class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
 
         super().__init__(
             dynamics_model=DoorDynamicsModel(),
-            measurement_model=CrossmodalKalmanFilterMeasurementModel(
-                measurement_models=[
-                    DoorKalmanFilterMeasurementModel(modalities={"image"}),
-                    DoorKalmanFilterMeasurementModel(modalities={"pos", "sensors"}),
+            virtual_sensor_model=CrossmodalVirtualSensorModel(
+                virtual_sensor_model=[
+                    DoorVirtualSensorModel(modalities={"image"}),
+                    DoorVirtualSensorModel(modalities={"pos", "sensors"}),
                 ],
                 crossmodal_weight_model=DoorCrossmodalKalmanFilterWeightModel(
                     state_dim=3

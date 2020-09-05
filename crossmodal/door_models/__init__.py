@@ -12,7 +12,7 @@ from .crossmodal_pf import (
     DoorCrossmodalParticleFilterSeq5,
 )
 from .dynamics import DoorDynamicsModel, DoorDynamicsModelBrent
-from .kf import DoorKalmanFilter, DoorKalmanFilterMeasurementModel
+from .kf import DoorKalmanFilter, DoorVirtualSensorModel
 from .lstm import DoorLSTMFilter
 from .pf import DoorMeasurementModel, DoorParticleFilter
 from .unimodal_kf import DoorMeasurementUnimodalKalmanFilter, DoorUnimodalKalmanFilter

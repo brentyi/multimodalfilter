@@ -6,7 +6,7 @@ from .dynamics import PushDynamicsModel
 from .pf import PushMeasurementModel
 
 
-class PushUnimodalParticleFilter(diffbayes.base.ParticleFilter, PushTask.Filter):
+class PushUnimodalParticleFilter(diffbayes.filters.ParticleFilter, PushTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """

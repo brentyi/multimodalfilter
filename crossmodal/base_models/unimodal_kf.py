@@ -10,22 +10,22 @@ from diffbayes import types
 from .utility import weighted_average
 
 
-class UnimodalKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasurementModel):
+class UnimodalVirtualSensorModel(diffbayes.base.VirtualSensorModel):
     """Utility class for merging unimodal measurement models via unimodal weighting.
     """
 
     def __init__(
         self,
         *,
-        measurement_models: List[diffbayes.base.KalmanFilterMeasurementModel],
+        virtual_sensor_model: List[diffbayes.base.VirtualSensorModel],
         state_dim: int,
     ):
         super().__init__(state_dim=state_dim)
 
-        self.measurement_models = nn.ModuleList(measurement_models)
+        self.virtual_sensor_model = nn.ModuleList(virtual_sensor_model)
         """ nn.ModuleList: List of measurement models. """
 
-        self._enabled_models: List[bool] = [True for _ in self.measurement_models]
+        self._enabled_models: List[bool] = [True for _ in self.virtual_sensor_model]
 
     @property
     def enabled_models(self) -> List[bool]:
@@ -47,7 +47,7 @@ class UnimodalKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasuremen
 
         # Input validation
         assert isinstance(enabled_models, list)
-        assert len(enabled_models) == len(self.measurement_models)
+        assert len(enabled_models) == len(self.virtual_sensor_model)
         for x in enabled_models:
             assert type(x) == bool
 
@@ -68,13 +68,16 @@ class UnimodalKalmanFilterMeasurementModel(diffbayes.base.KalmanFilterMeasuremen
         N = observations[[*observations][0]].shape[0]
 
         model_list = [
-            (measurement_model(observations=observations))
-            for i, measurement_model in enumerate(self.measurement_models)
+            (virtual_sensor_model(observations=observations))
+            for i, virtual_sensor_model in enumerate(self.virtual_sensor_model)
             if self._enabled_models[i]
         ]
 
         unimodal_states = torch.stack([x[0] for x in model_list])
-        unimodal_covariances = torch.stack([x[1] for x in model_list])
+        unimodal_scale_trils = torch.stack([x[1] for x in model_list])
+        unimodal_covariances = unimodal_scale_trils @ unimodal_scale_trils.transpose(
+            -1, -2
+        )
 
         if np.sum(self._enabled_models) == 1:
             weighted_states = unimodal_states[0]
@@ -115,7 +118,10 @@ class UnimodalKalmanFilter(diffbayes.base.Filter):
     """
 
     def __init__(
-        self, *, filter_models: List[diffbayes.base.KalmanFilter], state_dim: int,
+        self,
+        *,
+        filter_models: List[diffbayes.filters.VirtualSensorExtendedKalmanFilter],
+        state_dim: int,
     ):
         super().__init__(state_dim=state_dim)
 

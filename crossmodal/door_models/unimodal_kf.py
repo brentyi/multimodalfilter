@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 from fannypack.nn import resblocks
 
-from ..base_models import UnimodalKalmanFilter, UnimodalKalmanFilterMeasurementModel
+from ..base_models import UnimodalKalmanFilter, UnimodalVirtualSensorModel
 from ..tasks import DoorTask
 from . import layers
 from .dynamics import DoorDynamicsModel
-from .kf import DoorKalmanFilter, DoorKalmanFilterMeasurementModel
+from .kf import DoorKalmanFilter, DoorVirtualSensorModel
 
 
 class DoorUnimodalKalmanFilter(UnimodalKalmanFilter, DoorTask.Filter):
@@ -20,13 +20,11 @@ class DoorUnimodalKalmanFilter(UnimodalKalmanFilter, DoorTask.Filter):
             filter_models=[
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
-                    measurement_model=DoorKalmanFilterMeasurementModel(
-                        modalities={"image"}
-                    ),
+                    virtual_sensor_model=DoorVirtualSensorModel(modalities={"image"}),
                 ),
                 DoorKalmanFilter(
                     dynamics_model=DoorDynamicsModel(),
-                    measurement_model=DoorKalmanFilterMeasurementModel(
+                    virtual_sensor_model=DoorVirtualSensorModel(
                         modalities={"pos", "sensors"}
                     ),
                 ),
@@ -42,10 +40,10 @@ class DoorMeasurementUnimodalKalmanFilter(DoorKalmanFilter):
 
         super().__init__(
             dynamics_model=DoorDynamicsModel(),
-            measurement_model=UnimodalKalmanFilterMeasurementModel(
-                measurement_models=[
-                    DoorKalmanFilterMeasurementModel(modalities={"image"}),
-                    DoorKalmanFilterMeasurementModel(modalities={"pos", "sensors"}),
+            virtual_sensor_model=UnimodalVirtualSensorModel(
+                virtual_sensor_model=[
+                    DoorVirtualSensorModel(modalities={"image"}),
+                    DoorVirtualSensorModel(modalities={"pos", "sensors"}),
                 ],
                 state_dim=3,
             ),

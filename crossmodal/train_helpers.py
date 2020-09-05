@@ -8,14 +8,14 @@ import torch.utils.data
 # These need to externally set before training
 buddy: fannypack.utils.Buddy
 filter_model: diffbayes.base.Filter
-trajectories: List[diffbayes.types.TrajectoryTupleNumpy]
+trajectories: List[diffbayes.types.TrajectoryNumpy]
 num_workers: int
 
 
 def configure(
     *,
     buddy: fannypack.utils.Buddy,
-    trajectories: List[diffbayes.types.TrajectoryTupleNumpy],
+    trajectories: List[diffbayes.types.TrajectoryNumpy],
     num_workers: int = 8,
 ):
     """Configure global settings for training helpers.
@@ -75,7 +75,7 @@ def train_pf_dynamics_recurrent(
 
 
 def train_pf_measurement(*, epochs, batch_size, cov_scale=0.1):
-    assert isinstance(filter_model, diffbayes.base.ParticleFilter)
+    assert isinstance(filter_model, diffbayes.filters.ParticleFilter)
 
     # Put model in train mode
     filter_model.train()
@@ -91,7 +91,7 @@ def train_pf_measurement(*, epochs, batch_size, cov_scale=0.1):
         num_workers=num_workers,
     )
     for _ in range(epochs):
-        diffbayes.train.train_particle_filter_measurement_model(
+        diffbayes.train.train_particle_filter_measurement(
             buddy, filter_model.measurement_model, dataloader
         )
 
@@ -102,7 +102,7 @@ def train_kf_measurement(
 
     if model is None:
         model = filter_model
-    assert isinstance(model, diffbayes.base.KalmanFilter)
+    assert isinstance(model, diffbayes.filters.VirtualSensorExtendedKalmanFilter)
 
     # Put model in train mode
     model.train()
@@ -114,8 +114,11 @@ def train_kf_measurement(
         num_workers=num_workers,
     )
     for _ in range(epochs):
-        diffbayes.train.train_kalman_filter_measurement_model(
-            buddy, model.measurement_model, dataloader, optimizer_name=optimizer_name,
+        diffbayes.train.train_virtual_sensor(
+            buddy,
+            model.virtual_sensor_model,
+            dataloader,
+            optimizer_name=optimizer_name,
         )
 
 

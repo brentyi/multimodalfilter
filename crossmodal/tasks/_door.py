@@ -56,7 +56,7 @@ class DoorTask(Task):
     @classmethod
     def get_train_trajectories(
         cls, **dataset_args
-    ) -> List[diffbayes.types.TrajectoryTupleNumpy]:
+    ) -> List[diffbayes.types.TrajectoryNumpy]:
         return _load_trajectories(
             "panda_door_pull_100.hdf5", "panda_door_push_100.hdf5", **dataset_args
         )
@@ -64,7 +64,7 @@ class DoorTask(Task):
     @classmethod
     def get_eval_trajectories(
         cls, **dataset_args
-    ) -> List[diffbayes.types.TrajectoryTupleNumpy]:
+    ) -> List[diffbayes.types.TrajectoryNumpy]:
         return _load_trajectories(
             "panda_door_pull_10.hdf5", "panda_door_push_10.hdf5", **dataset_args
         )
@@ -79,7 +79,7 @@ def _load_trajectories(
     image_blackout_ratio: float = 0.0,
     sequential_image_rate: int = 1,
     start_timestep: int = 0,
-) -> List[diffbayes.types.TrajectoryTupleNumpy]:
+) -> List[diffbayes.types.TrajectoryNumpy]:
     """Loads a list of trajectories from a set of input files, where each trajectory is
     a tuple containing...
         states: an (T, state_dim) array of state vectors
@@ -108,7 +108,7 @@ def _load_trajectories(
             of each trajectory.
 
     Returns:
-        List[diffbayes.types.TrajectoryTupleNumpy]: list of trajectories.
+        List[diffbayes.types.TrajectoryNumpy]: list of trajectories.
     """
     trajectories = []
 
@@ -289,7 +289,7 @@ def _load_trajectories(
             )
 
             trajectories.append(
-                (
+                diffbayes.types.TrajectoryNumpy(
                     states[start_timestep:],
                     fannypack.utils.SliceWrapper(observations)[start_timestep:],
                     controls[start_timestep:],

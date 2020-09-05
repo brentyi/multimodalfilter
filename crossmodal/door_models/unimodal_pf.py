@@ -6,7 +6,7 @@ from .dynamics import DoorDynamicsModelBrent
 from .pf import DoorMeasurementModel
 
 
-class DoorUnimodalParticleFilter(diffbayes.base.ParticleFilter, DoorTask.Filter):
+class DoorUnimodalParticleFilter(diffbayes.filters.ParticleFilter, DoorTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """

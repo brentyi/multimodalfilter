@@ -1,10 +1,10 @@
 from .crossmodal_kf import (
     CrossmodalKalmanFilter,
-    CrossmodalKalmanFilterMeasurementModel,
     CrossmodalKalmanFilterWeightModel,
+    CrossmodalVirtualSensorModel,
 )
 from .crossmodal_pf import (
     CrossmodalParticleFilterMeasurementModel,
     CrossmodalWeightModel,
 )
-from .unimodal_kf import UnimodalKalmanFilter, UnimodalKalmanFilterMeasurementModel
+from .unimodal_kf import UnimodalKalmanFilter, UnimodalVirtualSensorModel

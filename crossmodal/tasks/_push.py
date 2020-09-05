@@ -63,7 +63,7 @@ class PushTask(Task):
     @classmethod
     def get_train_trajectories(
         cls, **dataset_args
-    ) -> List[diffbayes.types.TrajectoryTupleNumpy]:
+    ) -> List[diffbayes.types.TrajectoryNumpy]:
 
         kloss_dataset = (
             dataset_args["kloss_dataset"] if "kloss_dataset" in dataset_args else False
@@ -84,7 +84,7 @@ class PushTask(Task):
     @classmethod
     def get_eval_trajectories(
         cls, **dataset_args
-    ) -> List[diffbayes.types.TrajectoryTupleNumpy]:
+    ) -> List[diffbayes.types.TrajectoryNumpy]:
 
         kloss_dataset = (
             dataset_args["kloss_dataset"] if "kloss_dataset" in dataset_args else False
@@ -105,7 +105,7 @@ def _load_trajectories(
     sequential_image_rate: int = 1,
     start_timestep: int = 0,
     kloss_dataset: bool = False,
-) -> List[diffbayes.types.TrajectoryTupleNumpy]:
+) -> List[diffbayes.types.TrajectoryNumpy]:
     """Loads a list of trajectories from a set of input files, where each trajectory is
     a tuple containing...
         states: an (T, state_dim) array of state vectors
@@ -134,7 +134,7 @@ def _load_trajectories(
             of each trajectory.
 
     Returns:
-        List[diffbayes.types.TrajectoryTupleNumpy]: list of trajectories.
+        List[diffbayes.types.TrajectoryNumpy]: list of trajectories.
     """
     trajectories = []
 
@@ -375,7 +375,7 @@ def _load_trajectories(
                 )
 
             trajectories.append(
-                (
+                diffbayes.types.TrajectoryNumpy(
                     states[start_timestep:],
                     fannypack.utils.SliceWrapper(observations)[start_timestep:],
                     controls[start_timestep:],

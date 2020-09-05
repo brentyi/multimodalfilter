@@ -7,9 +7,9 @@ import fannypack
 
 import crossmodal
 from crossmodal.base_models import (
-    CrossmodalKalmanFilterMeasurementModel,
     CrossmodalParticleFilterMeasurementModel,
-    UnimodalKalmanFilterMeasurementModel,
+    CrossmodalVirtualSensorModel,
+    UnimodalVirtualSensorModel,
 )
 
 Task = crossmodal.tasks.DoorTask
@@ -237,7 +237,7 @@ elif isinstance(filter_model, crossmodal.door_models.DoorKalmanFilter):
     fannypack.utils.freeze_module(filter_model.dynamics_model)
 
     # Pre-train measurement model
-    train_helpers.train_kf_measurement(epochs=10, batch_size=64)
+    train_helpers.train_virtual_sensor(epochs=10, batch_size=64)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase2")
 
@@ -290,8 +290,8 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     )
 
     # Pre-train measurement model
-    train_helpers.train_kf_measurement(epochs=5, batch_size=64, model=image_model)
-    train_helpers.train_kf_measurement(epochs=5, batch_size=64, model=force_model)
+    train_helpers.train_virtual_sensor(epochs=5, batch_size=64, model=image_model)
+    train_helpers.train_virtual_sensor(epochs=5, batch_size=64, model=force_model)
     buddy.save_checkpoint("phase2")
 
     # Pre-train kalman filter (image)
@@ -400,8 +400,8 @@ elif isinstance(filter_model, crossmodal.door_models.DoorUnimodalKalmanFilter):
     )
 
     # Pre-train measurement model
-    train_helpers.train_kf_measurement(epochs=3, batch_size=64, model=image_model)
-    train_helpers.train_kf_measurement(epochs=3, batch_size=64, model=force_model)
+    train_helpers.train_virtual_sensor(epochs=3, batch_size=64, model=image_model)
+    train_helpers.train_virtual_sensor(epochs=3, batch_size=64, model=force_model)
     buddy.save_checkpoint("phase2")
 
     # Pre-train kalman filter (image)

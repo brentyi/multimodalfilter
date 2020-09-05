@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 from fannypack.nn import resblocks
 
-from ..base_models import UnimodalKalmanFilter, UnimodalKalmanFilterMeasurementModel
+from ..base_models import UnimodalKalmanFilter, UnimodalVirtualSensorModel
 from ..tasks import PushTask
 from . import layers
 from .dynamics import PushDynamicsModel
-from .kf import PushKalmanFilter, PushKalmanFilterMeasurementModel
+from .kf import PushKalmanFilter, PushVirtualSensorModel
 
 
 class PushUnimodalKalmanFilter(UnimodalKalmanFilter, PushTask.Filter):
@@ -20,13 +20,11 @@ class PushUnimodalKalmanFilter(UnimodalKalmanFilter, PushTask.Filter):
             filter_models=[
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
-                    measurement_model=PushKalmanFilterMeasurementModel(
-                        modalities={"image"}
-                    ),
+                    virtual_sensor_model=PushVirtualSensorModel(modalities={"image"}),
                 ),
                 PushKalmanFilter(
                     dynamics_model=PushDynamicsModel(),
-                    measurement_model=PushKalmanFilterMeasurementModel(
+                    virtual_sensor_model=PushVirtualSensorModel(
                         modalities={"pos", "sensors"}
                     ),
                 ),
@@ -42,10 +40,10 @@ class PushMeasurementUnimodalKalmanFilter(PushKalmanFilter):
 
         super().__init__(
             dynamics_model=PushDynamicsModel(),
-            measurement_model=UnimodalKalmanFilterMeasurementModel(
-                measurement_models=[
-                    PushKalmanFilterMeasurementModel(modalities={"image"}),
-                    PushKalmanFilterMeasurementModel(modalities={"pos", "sensors"}),
+            virtual_sensor_model=UnimodalVirtualSensorModel(
+                virtual_sensor_model=[
+                    PushVirtualSensorModel(modalities={"image"}),
+                    PushVirtualSensorModel(modalities={"pos", "sensors"}),
                 ],
             ),
         )

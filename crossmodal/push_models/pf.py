@@ -11,7 +11,7 @@ from . import layers
 from .dynamics import PushDynamicsModel
 
 
-class PushParticleFilter(diffbayes.base.ParticleFilter, PushTask.Filter):
+class PushParticleFilter(diffbayes.filters.ParticleFilter, PushTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """
