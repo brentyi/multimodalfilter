@@ -1,16 +1,16 @@
 from typing import cast
 
-import diffbayes
-import diffbayes.types as types
 import torch
 import torch.nn as nn
+import torchfilter
+import torchfilter.types as types
 from fannypack.nn import resblocks
 
 from ..tasks import PushTask
 from . import layers
 
 
-class PushLSTMFilter(diffbayes.base.Filter, PushTask.Filter):
+class PushLSTMFilter(torchfilter.base.Filter, PushTask.Filter):
     def __init__(self, units: int = 64):
         """Initializes an LSTM architecture for our door task.
         """

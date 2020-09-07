@@ -1,10 +1,10 @@
 import argparse
 import dataclasses
 
-import diffbayes
 import fannypack
 import numpy as np
 import torch
+import torchfilter
 
 import crossmodal
 
@@ -27,7 +27,7 @@ model_type = buddy.metadata["model_type"]
 dataset_args = buddy.metadata["dataset_args"]
 
 # Load model using experiment metadata
-filter_model: diffbayes.base.Filter = Task.model_types[model_type]()
+filter_model: torchfilter.base.Filter = Task.model_types[model_type]()
 buddy.attach_model(filter_model)
 buddy.load_checkpoint(label=args.checkpoint_label)
 

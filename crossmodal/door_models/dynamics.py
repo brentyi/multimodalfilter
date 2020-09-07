@@ -1,14 +1,14 @@
-import diffbayes
-import diffbayes.types as types
 import torch
 import torch.nn as nn
+import torchfilter
+import torchfilter.types as types
 from fannypack.nn import resblocks
 
 from . import layers
 
 
 # TODO: Merge this with DoorDynamicsModelBrent
-class DoorDynamicsModel(diffbayes.base.DynamicsModel):
+class DoorDynamicsModel(torchfilter.base.DynamicsModel):
     def __init__(self, units=64):
         """Initializes a dynamics model for our door task.
         """
@@ -71,7 +71,7 @@ class DoorDynamicsModel(diffbayes.base.DynamicsModel):
 # Separate because the checkpoint files will no longer be compatible, and we don't want
 # to just casually nuke Michelle's models...
 #
-class DoorDynamicsModelBrent(diffbayes.base.DynamicsModel):
+class DoorDynamicsModelBrent(torchfilter.base.DynamicsModel):
     def __init__(self, units=64):
         """Initializes a dynamics model for our door task.
         """

@@ -1,23 +1,23 @@
 import abc
 from typing import List
 
-import diffbayes
 import numpy as np
 import torch
 import torch.nn as nn
-from diffbayes import types
+import torchfilter
+from torchfilter import types
 
 from .utility import weighted_average
 
 
-class UnimodalVirtualSensorModel(diffbayes.base.VirtualSensorModel):
+class UnimodalVirtualSensorModel(torchfilter.base.VirtualSensorModel):
     """Utility class for merging unimodal measurement models via unimodal weighting.
     """
 
     def __init__(
         self,
         *,
-        virtual_sensor_model: List[diffbayes.base.VirtualSensorModel],
+        virtual_sensor_model: List[torchfilter.base.VirtualSensorModel],
         state_dim: int,
     ):
         super().__init__(state_dim=state_dim)
@@ -113,14 +113,14 @@ class UnimodalVirtualSensorModel(diffbayes.base.VirtualSensorModel):
         return weighted_states, weighted_covariances
 
 
-class UnimodalKalmanFilter(diffbayes.base.Filter):
+class UnimodalKalmanFilter(torchfilter.base.Filter):
     """Utility class for merging unimodal kalman filter models via crossmodal weighting.
     """
 
     def __init__(
         self,
         *,
-        filter_models: List[diffbayes.filters.VirtualSensorExtendedKalmanFilter],
+        filter_models: List[torchfilter.filters.VirtualSensorExtendedKalmanFilter],
         state_dim: int,
     ):
         super().__init__(state_dim=state_dim)

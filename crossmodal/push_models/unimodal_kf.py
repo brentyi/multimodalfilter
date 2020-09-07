@@ -1,7 +1,7 @@
-import diffbayes
-import diffbayes.types as types
 import torch
 import torch.nn as nn
+import torchfilter
+import torchfilter.types as types
 from fannypack.nn import resblocks
 
 from ..base_models import UnimodalKalmanFilter, UnimodalVirtualSensorModel

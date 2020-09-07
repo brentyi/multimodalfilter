@@ -11,6 +11,6 @@ setup(
     packages=["crossmodal"],
     install_requires=[
         "fannypack",
-        "diffbayes @ https://github.com/brentyi/diffbayes/tarball/master",
+        "torchfilter @ https://github.com/brentyi/torchfilter/tarball/master",
     ],
 )

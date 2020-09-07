@@ -1,8 +1,8 @@
-import diffbayes
-import diffbayes.types as types
 import numpy as np
 import torch
 import torch.nn as nn
+import torchfilter
+import torchfilter.types as types
 from fannypack.nn import resblocks
 
 from ..base_models import (
@@ -15,7 +15,7 @@ from .dynamics import DoorDynamicsModelBrent
 from .pf import DoorMeasurementModel
 
 
-class DoorCrossmodalParticleFilter(diffbayes.filters.ParticleFilter, DoorTask.Filter):
+class DoorCrossmodalParticleFilter(torchfilter.filters.ParticleFilter, DoorTask.Filter):
     def __init__(self, know_image_blackout: bool = False):
         """Initializes a particle filter for our door task.
         """

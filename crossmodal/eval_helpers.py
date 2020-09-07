@@ -1,15 +1,15 @@
 from typing import Dict, List, Type, cast
 
-import diffbayes
 import fannypack
 import numpy as np
 import torch
+import torchfilter
 
 from . import tasks
 
 # These need to externally set before eval
 buddy: fannypack.utils.Buddy
-filter_model: diffbayes.base.Filter
+filter_model: torchfilter.base.Filter
 task: Type[tasks.Task]
 dataset_args: Dict
 
@@ -20,9 +20,9 @@ def configure(
     """Configure global settings for eval helpers.
     """
     assert issubclass(task, tasks.Task)
-    assert isinstance(buddy.model, diffbayes.base.Filter)
+    assert isinstance(buddy.model, torchfilter.base.Filter)
     globals()["buddy"] = buddy
-    globals()["filter_model"] = cast(diffbayes.base.Filter, buddy.model)
+    globals()["filter_model"] = cast(torchfilter.base.Filter, buddy.model)
     globals()["task"] = task
     globals()["dataset_args"] = dataset_args
 
@@ -69,7 +69,7 @@ def run_eval_stats(*eval_args, **eval_kwargs) -> Dict[str, float]:
 def run_eval(measurement_initialize=False, eval_dynamics=False) -> Dict[str, float]:
     """Evaluate a filter, print out + return metrics.
     """
-    assert isinstance(filter_model, diffbayes.base.Filter)
+    assert isinstance(filter_model, torchfilter.base.Filter)
 
     # Get eval trajectories
     trajectories = globals()["task"].get_eval_trajectories(**dataset_args)

@@ -1,28 +1,28 @@
 from typing import List, cast
 
-import diffbayes
 import fannypack
 import numpy as np
 import torch.utils.data
+import torchfilter
 
 # These need to externally set before training
 buddy: fannypack.utils.Buddy
-filter_model: diffbayes.base.Filter
-trajectories: List[diffbayes.types.TrajectoryNumpy]
+filter_model: torchfilter.base.Filter
+trajectories: List[torchfilter.types.TrajectoryNumpy]
 num_workers: int
 
 
 def configure(
     *,
     buddy: fannypack.utils.Buddy,
-    trajectories: List[diffbayes.types.TrajectoryNumpy],
+    trajectories: List[torchfilter.types.TrajectoryNumpy],
     num_workers: int = 8,
 ):
     """Configure global settings for training helpers.
     """
-    assert isinstance(buddy.model, diffbayes.base.Filter)
+    assert isinstance(buddy.model, torchfilter.base.Filter)
     globals()["buddy"] = buddy
-    globals()["filter_model"] = cast(diffbayes.base.Filter, buddy.model)
+    globals()["filter_model"] = cast(torchfilter.base.Filter, buddy.model)
     globals()["trajectories"] = trajectories
     globals()["num_workers"] = num_workers
 
@@ -31,19 +31,19 @@ def configure(
 def train_pf_dynamics_single_step(*, epochs, batch_size=32, model=None):
     if model is None:
         model = filter_model
-    assert isinstance(model, diffbayes.base.Filter)
+    assert isinstance(model, torchfilter.base.Filter)
 
     # Put model in train mode
     model.train()
 
     dataloader = torch.utils.data.DataLoader(
-        diffbayes.data.SingleStepDataset(trajectories=trajectories),
+        torchfilter.data.SingleStepDataset(trajectories=trajectories),
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
     )
     for _ in range(epochs):
-        diffbayes.train.train_dynamics_single_step(
+        torchfilter.train.train_dynamics_single_step(
             buddy, model.dynamics_model, dataloader, loss_function="mse"
         )
 
@@ -51,17 +51,17 @@ def train_pf_dynamics_single_step(*, epochs, batch_size=32, model=None):
 def train_pf_dynamics_recurrent(
     *, subsequence_length, epochs, batch_size=32, model=None
 ):
-    assert isinstance(filter_model, diffbayes.base.Filter)
+    assert isinstance(filter_model, torchfilter.base.Filter)
 
     if model is None:
         model = filter_model
-    assert isinstance(model, diffbayes.base.Filter)
+    assert isinstance(model, torchfilter.base.Filter)
 
     # Put model in train mode
     model.train()
 
     dataloader = torch.utils.data.DataLoader(
-        diffbayes.data.SubsequenceDataset(
+        torchfilter.data.SubsequenceDataset(
             trajectories=trajectories, subsequence_length=subsequence_length
         ),
         batch_size=batch_size,
@@ -69,19 +69,19 @@ def train_pf_dynamics_recurrent(
         num_workers=num_workers,
     )
     for _ in range(epochs):
-        diffbayes.train.train_dynamics_recurrent(
+        torchfilter.train.train_dynamics_recurrent(
             buddy, model.dynamics_model, dataloader, loss_function="mse"
         )
 
 
 def train_pf_measurement(*, epochs, batch_size, cov_scale=0.1):
-    assert isinstance(filter_model, diffbayes.filters.ParticleFilter)
+    assert isinstance(filter_model, torchfilter.filters.ParticleFilter)
 
     # Put model in train mode
     filter_model.train()
 
     dataloader = torch.utils.data.DataLoader(
-        diffbayes.data.ParticleFilterMeasurementDataset(
+        torchfilter.data.ParticleFilterMeasurementDataset(
             trajectories=trajectories,
             covariance=np.identity(filter_model.state_dim) * cov_scale,
             samples_per_pair=10,
@@ -91,7 +91,7 @@ def train_pf_measurement(*, epochs, batch_size, cov_scale=0.1):
         num_workers=num_workers,
     )
     for _ in range(epochs):
-        diffbayes.train.train_particle_filter_measurement(
+        torchfilter.train.train_particle_filter_measurement(
             buddy, filter_model.measurement_model, dataloader
         )
 
@@ -102,19 +102,19 @@ def train_kf_measurement(
 
     if model is None:
         model = filter_model
-    assert isinstance(model, diffbayes.filters.VirtualSensorExtendedKalmanFilter)
+    assert isinstance(model, torchfilter.filters.VirtualSensorExtendedKalmanFilter)
 
     # Put model in train mode
     model.train()
 
     dataloader = torch.utils.data.DataLoader(
-        diffbayes.data.SingleStepDataset(trajectories=trajectories),
+        torchfilter.data.SingleStepDataset(trajectories=trajectories),
         batch_size=batch_size,
         shuffle=True,
         num_workers=num_workers,
     )
     for _ in range(epochs):
-        diffbayes.train.train_virtual_sensor(
+        torchfilter.train.train_virtual_sensor(
             buddy,
             model.virtual_sensor_model,
             dataloader,
@@ -135,13 +135,13 @@ def train_e2e(
 
     if model is None:
         model = filter_model
-    assert isinstance(model, diffbayes.base.Filter)
+    assert isinstance(model, torchfilter.base.Filter)
 
     # Put model in train mode
     model.train()
 
     dataloader = torch.utils.data.DataLoader(
-        diffbayes.data.SubsequenceDataset(
+        torchfilter.data.SubsequenceDataset(
             trajectories=trajectories, subsequence_length=subsequence_length
         ),
         batch_size=batch_size,
@@ -153,7 +153,7 @@ def train_e2e(
         torch.eye(model.state_dim, device=buddy.device) * initial_cov_scale
     )
     for _ in range(epochs):
-        diffbayes.train.train_filter(
+        torchfilter.train.train_filter(
             buddy,
             model,
             dataloader,

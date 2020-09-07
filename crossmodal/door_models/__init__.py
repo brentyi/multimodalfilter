@@ -1,6 +1,6 @@
 from typing import Dict as _Dict
 
-import diffbayes as _diffbayes
+import torchfilter as _torchfilter
 
 from .crossmodal_kf import (
     DoorCrossmodalKalmanFilter,

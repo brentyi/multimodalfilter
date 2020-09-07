@@ -2,7 +2,7 @@ import abc
 import argparse
 from typing import Dict
 
-import diffbayes
+import torchfilter
 
 
 class Task(abc.ABC):
@@ -22,8 +22,8 @@ class Task(abc.ABC):
 
         # Each model type can be registered by subclassing task.Filter.
         class Filter:
-            def __init_subclass__(cls_inner: diffbayes.base.Filter, **kwargs):
-                assert issubclass(cls_inner, diffbayes.base.Filter)
+            def __init_subclass__(cls_inner: torchfilter.base.Filter, **kwargs):
+                assert issubclass(cls_inner, torchfilter.base.Filter)
                 cls.model_types[cls_inner.__name__] = cls_inner
 
         cls.Filter = Filter

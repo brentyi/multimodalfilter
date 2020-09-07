@@ -1,11 +1,11 @@
 import abc
 from typing import List, Optional
 
-import diffbayes
 import numpy as np
 import torch
 import torch.nn as nn
-from diffbayes import types
+import torchfilter
+from torchfilter import types
 
 
 class CrossmodalWeightModel(nn.Module, abc.ABC):
@@ -32,7 +32,7 @@ class CrossmodalWeightModel(nn.Module, abc.ABC):
 
 
 class CrossmodalParticleFilterMeasurementModel(
-    diffbayes.base.ParticleFilterMeasurementModel
+    torchfilter.base.ParticleFilterMeasurementModel
 ):
     """Utility class for merging unimodal measurement models via crossmodal weighting.
 
@@ -43,7 +43,7 @@ class CrossmodalParticleFilterMeasurementModel(
     def __init__(
         self,
         *,
-        measurement_models: List[diffbayes.base.ParticleFilterMeasurementModel],
+        measurement_models: List[torchfilter.base.ParticleFilterMeasurementModel],
         crossmodal_weight_model: Optional[CrossmodalWeightModel],
         state_dim: int,
     ):

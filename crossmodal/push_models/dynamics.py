@@ -1,13 +1,13 @@
-import diffbayes
-import diffbayes.types as types
 import torch
 import torch.nn as nn
+import torchfilter
+import torchfilter.types as types
 from fannypack.nn import resblocks
 
 from . import layers
 
 
-class PushDynamicsModel(diffbayes.base.DynamicsModel):
+class PushDynamicsModel(torchfilter.base.DynamicsModel):
     def __init__(self, units=64):
         """Initializes a dynamics model for our door task.
         """

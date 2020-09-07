@@ -1,11 +1,11 @@
 import abc
 from typing import List, Tuple
 
-import diffbayes
 import numpy as np
 import torch
 import torch.nn as nn
-from diffbayes import types
+import torchfilter
+from torchfilter import types
 
 from .utility import weighted_average
 
@@ -37,14 +37,14 @@ class CrossmodalKalmanFilterWeightModel(nn.Module, abc.ABC):
         pass
 
 
-class CrossmodalKalmanFilter(diffbayes.base.Filter):
+class CrossmodalKalmanFilter(torchfilter.base.Filter):
     """Utility class for merging unimodal kalman filter models via crossmodal weighting.
     """
 
     def __init__(
         self,
         *,
-        filter_models: List[diffbayes.filters.VirtualSensorExtendedKalmanFilter],
+        filter_models: List[torchfilter.filters.VirtualSensorExtendedKalmanFilter],
         crossmodal_weight_model: CrossmodalKalmanFilterWeightModel,
         state_dim: int,
     ):
@@ -239,14 +239,14 @@ class CrossmodalKalmanFilter(diffbayes.base.Filter):
         self.initialize_beliefs(mean=weighted_states, covariance=weighted_covariances)
 
 
-class CrossmodalVirtualSensorModel(diffbayes.base.VirtualSensorModel):
+class CrossmodalVirtualSensorModel(torchfilter.base.VirtualSensorModel):
     """Utility class for merging unimodal measurement models via crossmodal weighting.
     """
 
     def __init__(
         self,
         *,
-        virtual_sensor_model: List[diffbayes.base.VirtualSensorModel],
+        virtual_sensor_model: List[torchfilter.base.VirtualSensorModel],
         crossmodal_weight_model: CrossmodalKalmanFilterWeightModel,
         state_dim: int,
     ):

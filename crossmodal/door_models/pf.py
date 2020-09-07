@@ -1,9 +1,9 @@
 from typing import Set, cast
 
-import diffbayes
-import diffbayes.types as types
 import torch
 import torch.nn as nn
+import torchfilter
+import torchfilter.types as types
 from fannypack.nn import resblocks
 
 from ..tasks import DoorTask
@@ -11,7 +11,7 @@ from . import layers
 from .dynamics import DoorDynamicsModelBrent
 
 
-class DoorParticleFilter(diffbayes.filters.ParticleFilter, DoorTask.Filter):
+class DoorParticleFilter(torchfilter.filters.ParticleFilter, DoorTask.Filter):
     def __init__(self):
         """Initializes a particle filter for our door task.
         """
@@ -29,7 +29,7 @@ class DoorParticleFilter(diffbayes.filters.ParticleFilter, DoorTask.Filter):
         super().train(mode)
 
 
-class DoorMeasurementModel(diffbayes.base.ParticleFilterMeasurementModel):
+class DoorMeasurementModel(torchfilter.base.ParticleFilterMeasurementModel):
     def __init__(
         self, units: int = 64, modalities: Set[str] = {"image", "pos", "sensors"}
     ):

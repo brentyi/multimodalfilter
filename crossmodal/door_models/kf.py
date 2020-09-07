@@ -1,9 +1,9 @@
 from typing import Set, Tuple, cast
 
-import diffbayes
-import diffbayes.types as types
 import torch
 import torch.nn as nn
+import torchfilter
+import torchfilter.types as types
 from fannypack.nn import resblocks
 
 from ..tasks import DoorTask
@@ -12,7 +12,7 @@ from .dynamics import DoorDynamicsModel
 
 
 class DoorKalmanFilter(
-    diffbayes.filters.VirtualSensorExtendedKalmanFilter, DoorTask.Filter
+    torchfilter.filters.VirtualSensorExtendedKalmanFilter, DoorTask.Filter
 ):
     def __init__(self, dynamics_model=None, virtual_sensor_model=None):
         """Initializes a particle filter for our door task.
@@ -29,7 +29,7 @@ class DoorKalmanFilter(
             )
 
 
-class DoorVirtualSensorModel(diffbayes.base.VirtualSensorModel):
+class DoorVirtualSensorModel(torchfilter.base.VirtualSensorModel):
     def __init__(
         self,
         units: int = 64,
