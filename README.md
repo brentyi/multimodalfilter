@@ -52,7 +52,7 @@ EKFs, and UKFs have been factored into a standalone library
 Package and dependencies can be installed in Python >=3.7 with `pip`:
 
 ```
-git clone https://github.com/brentyi/crossmodal_filtering2.git
-cd crossmodal_filtering2
+git clone https://github.com/brentyi/multimodalfilter.git
+cd multimodalfilter
 pip install -e .
 ```
