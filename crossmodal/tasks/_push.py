@@ -165,7 +165,7 @@ def _load_trajectories(
 
             # State is just (x, y)
             state_dim = 2
-            states = np.full((timesteps, state_dim), np.nan)
+            states = np.full((timesteps, state_dim), np.nan, dtype=np.float32)
 
             if kloss_dataset:
                 states[:, 0] = raw_trajectory["pos"][:, 0]
@@ -274,13 +274,15 @@ def _load_trajectories(
                             0.00000000e00,
                             6.25842857e-01,
                         ]
-                    ]
+                    ],
+                    dtype=np.float32
                 )
                 observations["gripper_sensors"] /= np.array(
-                    [[2.09539968, 2.0681382, 0.00373115, 1.0, 1.0, 1.0, 0.48390451]]
+                    [[2.09539968, 2.0681382, 0.00373115, 1.0, 1.0, 1.0, 0.48390451]],
+                    dtype=np.float32
                 )
-                states -= np.array([[-0.00279736, -0.00027878]])
-                states /= np.array([[0.06409658, 0.06649422]])
+                states -= np.array([[-0.00279736, -0.00027878]], dtype=np.float32)
+                states /= np.array([[0.06409658, 0.06649422]], dtype=np.float32)
                 controls -= np.array(
                     [
                         [
@@ -292,7 +294,8 @@ def _load_trajectories(
                             -1.08724583e-05,
                             6.25842857e-01,
                         ]
-                    ]
+                    ],
+                    dtype=np.float32
                 )
                 controls /= np.array(
                     [
@@ -305,7 +308,8 @@ def _load_trajectories(
                             0.0115694,
                             0.48390451,
                         ]
-                    ]
+                    ],
+                    dtype=np.float32
                 )
 
             else:
@@ -343,8 +347,8 @@ def _load_trajectories(
                     ],
                     dtype=np.float32,
                 )
-                states -= np.array([[0.4970164, -0.00916641]])
-                states /= np.array([[0.0572766, 0.06118315]])
+                states -= np.array([[0.4970164, -0.00916641]], dtype=np.float32)
+                states /= np.array([[0.0572766, 0.06118315]], dtype=np.float32)
                 controls -= np.array(
                     [
                         [
