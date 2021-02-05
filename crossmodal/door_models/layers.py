@@ -18,7 +18,9 @@ def state_layers(units: int) -> nn.Module:
         nn.Module: Encoder block.
     """
     return nn.Sequential(
-        nn.Linear(state_dim, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+        nn.Linear(state_dim, units),
+        nn.ReLU(inplace=True),
+        resblocks.Linear(units),
     )
 
 
@@ -32,7 +34,9 @@ def control_layers(units: int) -> nn.Module:
         nn.Module: Encoder block.
     """
     return nn.Sequential(
-        nn.Linear(control_dim, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+        nn.Linear(control_dim, units),
+        nn.ReLU(inplace=True),
+        resblocks.Linear(units),
     )
 
 
@@ -69,7 +73,9 @@ def observation_pos_layers(units: int) -> nn.Module:
         nn.Module: Encoder block.
     """
     return nn.Sequential(
-        nn.Linear(obs_pos_dim, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+        nn.Linear(obs_pos_dim, units),
+        nn.ReLU(inplace=True),
+        resblocks.Linear(units),
     )
 
 

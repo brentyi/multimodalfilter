@@ -11,8 +11,7 @@ from .utility import weighted_average
 
 
 class UnimodalVirtualSensorModel(torchfilter.base.VirtualSensorModel):
-    """Utility class for merging unimodal measurement models via unimodal weighting.
-    """
+    """Utility class for merging unimodal measurement models via unimodal weighting."""
 
     def __init__(
         self,
@@ -107,15 +106,17 @@ class UnimodalVirtualSensorModel(torchfilter.base.VirtualSensorModel):
                 torch.sum(unimodal_precision, dim=0) + 1e-9
             )
 
-        assert weighted_states.shape == (N, self.state_dim,)
+        assert weighted_states.shape == (
+            N,
+            self.state_dim,
+        )
         assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)
 
         return weighted_states, weighted_covariances
 
 
 class UnimodalKalmanFilter(torchfilter.base.Filter):
-    """Utility class for merging unimodal kalman filter models via crossmodal weighting.
-    """
+    """Utility class for merging unimodal kalman filter models via crossmodal weighting."""
 
     def __init__(
         self,
@@ -159,7 +160,10 @@ class UnimodalKalmanFilter(torchfilter.base.Filter):
         self._enabled_models = enabled_models
 
     def forward(
-        self, *, observations: types.ObservationsTorch, controls: types.ControlsTorch,
+        self,
+        *,
+        observations: types.ObservationsTorch,
+        controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         """Kalman filter with unimodal weights forward pass, single timestep.
 
@@ -237,7 +241,10 @@ class UnimodalKalmanFilter(torchfilter.base.Filter):
                 weighted_states_unnormalized
             ).squeeze(-1)
 
-        assert weighted_states.shape == (N, self.state_dim,)
+        assert weighted_states.shape == (
+            N,
+            self.state_dim,
+        )
         assert weighted_covariances.shape == (N, self.state_dim, self.state_dim)
 
         return weighted_states

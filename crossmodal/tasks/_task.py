@@ -13,8 +13,7 @@ class Task(abc.ABC):
         assert False, "Cannot instantiate task object"
 
     def __init_subclass__(cls, **kwargs):
-        """Registers a task.
-        """
+        """Registers a task."""
         super().__init_subclass__(**kwargs)
 
         # Each task will have a list of model types.

@@ -19,8 +19,7 @@ from .kf import PushKalmanFilter, PushVirtualSensorModel
 
 class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
     def __init__(self, know_image_blackout=False):
-        """Initializes a kalman filter for our Push task.
-        """
+        """Initializes a kalman filter for our Push task."""
 
         super().__init__(
             filter_models=[
@@ -42,7 +41,10 @@ class PushCrossmodalKalmanFilter(CrossmodalKalmanFilter, PushTask.Filter):
         self.know_image_blackout = know_image_blackout
 
     def forward(
-        self, *, observations: types.ObservationsTorch, controls: types.ControlsTorch,
+        self,
+        *,
+        observations: types.ObservationsTorch,
+        controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         N, _ = controls.shape
         device = controls.device
@@ -167,8 +169,7 @@ class PushCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
 
 class PushMeasurementCrossmodalKalmanFilter(PushKalmanFilter):
     def __init__(self):
-        """Initializes a kalman filter for our Push task.
-        """
+        """Initializes a kalman filter for our Push task."""
 
         super().__init__(
             dynamics_model=PushDynamicsModel,

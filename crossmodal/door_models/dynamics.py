@@ -10,8 +10,7 @@ from . import layers
 # TODO: Merge this with DoorDynamicsModelBrent
 class DoorDynamicsModel(torchfilter.base.DynamicsModel):
     def __init__(self, units=64):
-        """Initializes a dynamics model for our door task.
-        """
+        """Initializes a dynamics model for our door task."""
 
         super().__init__(state_dim=3)
 
@@ -36,7 +35,10 @@ class DoorDynamicsModel(torchfilter.base.DynamicsModel):
         self.units = units
 
     def forward(
-        self, *, initial_states: types.StatesTorch, controls: types.ControlsTorch,
+        self,
+        *,
+        initial_states: types.StatesTorch,
+        controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         N, state_dim = initial_states.shape[:2]
         assert state_dim == self.state_dim
@@ -73,8 +75,7 @@ class DoorDynamicsModel(torchfilter.base.DynamicsModel):
 #
 class DoorDynamicsModelBrent(torchfilter.base.DynamicsModel):
     def __init__(self, units=64):
-        """Initializes a dynamics model for our door task.
-        """
+        """Initializes a dynamics model for our door task."""
 
         super().__init__(state_dim=3)
 
@@ -99,7 +100,10 @@ class DoorDynamicsModelBrent(torchfilter.base.DynamicsModel):
         self.units = units
 
     def forward(
-        self, *, initial_states: types.StatesTorch, controls: types.ControlsTorch,
+        self,
+        *,
+        initial_states: types.StatesTorch,
+        controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         N, state_dim = initial_states.shape[:2]
         assert state_dim == self.state_dim

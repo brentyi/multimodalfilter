@@ -135,7 +135,8 @@ elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalParticleFilte
 elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalParticleFilter):
     # Pull out measurement model, freeze crossmodal weights
     measurement_model: CrossmodalParticleFilterMeasurementModel = cast(
-        CrossmodalParticleFilterMeasurementModel, filter_model.measurement_model,
+        CrossmodalParticleFilterMeasurementModel,
+        filter_model.measurement_model,
     )
     fannypack.utils.freeze_module(measurement_model.crossmodal_weight_model)
 
@@ -194,7 +195,8 @@ elif isinstance(filter_model, crossmodal.push_models.PushUnimodalParticleFilter)
         filter_model.measurement_model, CrossmodalParticleFilterMeasurementModel
     )
     measurement_model: CrossmodalParticleFilterMeasurementModel = cast(
-        CrossmodalParticleFilterMeasurementModel, filter_model.measurement_model,
+        CrossmodalParticleFilterMeasurementModel,
+        filter_model.measurement_model,
     )
 
     # Pre-train dynamics (single-step)
@@ -498,7 +500,9 @@ else:
 
 # Add training end time
 buddy.add_metadata(
-    {"train_end_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),}
+    {
+        "train_end_time": datetime.datetime.now().strftime("%b %d, %Y @ %-H:%M:%S"),
+    }
 )
 
 # Eval model when done

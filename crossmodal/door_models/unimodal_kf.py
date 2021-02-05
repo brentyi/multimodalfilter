@@ -13,8 +13,7 @@ from .kf import DoorKalmanFilter, DoorVirtualSensorModel
 
 class DoorUnimodalKalmanFilter(UnimodalKalmanFilter, DoorTask.Filter):
     def __init__(self):
-        """Initializes a kalman filter for our door task.
-        """
+        """Initializes a kalman filter for our door task."""
 
         super().__init__(
             filter_models=[
@@ -35,8 +34,7 @@ class DoorUnimodalKalmanFilter(UnimodalKalmanFilter, DoorTask.Filter):
 
 class DoorMeasurementUnimodalKalmanFilter(DoorKalmanFilter):
     def __init__(self):
-        """Initializes a kalman filter for our door task.
-        """
+        """Initializes a kalman filter for our door task."""
 
         super().__init__(
             dynamics_model=DoorDynamicsModel(),

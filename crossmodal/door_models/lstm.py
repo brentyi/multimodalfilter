@@ -12,8 +12,7 @@ from . import layers
 
 class DoorLSTMFilter(torchfilter.base.Filter, DoorTask.Filter):
     def __init__(self, units: int = 64):
-        """Initializes an LSTM architecture for our door task.
-        """
+        """Initializes an LSTM architecture for our door task."""
         super().__init__(state_dim=3)
 
         self.lstm_hidden_dim = 512
@@ -32,7 +31,9 @@ class DoorLSTMFilter(torchfilter.base.Filter, DoorTask.Filter):
 
         # Initial fusion layers
         self.fusion_layers = nn.Sequential(
-            nn.Linear(units * 4, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+            nn.Linear(units * 4, units),
+            nn.ReLU(inplace=True),
+            resblocks.Linear(units),
         )
 
         # LSTM layers

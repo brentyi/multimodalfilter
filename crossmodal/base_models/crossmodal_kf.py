@@ -11,8 +11,7 @@ from .utility import weighted_average
 
 
 class CrossmodalKalmanFilterWeightModel(nn.Module, abc.ABC):
-    """Crossmodal weight model.
-    """
+    """Crossmodal weight model."""
 
     def __init__(self, modality_count: int, state_dim: int):
         super().__init__()
@@ -38,8 +37,7 @@ class CrossmodalKalmanFilterWeightModel(nn.Module, abc.ABC):
 
 
 class CrossmodalKalmanFilter(torchfilter.base.Filter):
-    """Utility class for merging unimodal kalman filter models via crossmodal weighting.
-    """
+    """Utility class for merging unimodal kalman filter models via crossmodal weighting."""
 
     def __init__(
         self,
@@ -88,7 +86,10 @@ class CrossmodalKalmanFilter(torchfilter.base.Filter):
         self._enabled_models = enabled_models
 
     def forward(
-        self, *, observations: types.ObservationsTorch, controls: types.ControlsTorch,
+        self,
+        *,
+        observations: types.ObservationsTorch,
+        controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         """Kalman filter with crossmodal weights forward pass, single timestep.
 
@@ -240,8 +241,7 @@ class CrossmodalKalmanFilter(torchfilter.base.Filter):
 
 
 class CrossmodalVirtualSensorModel(torchfilter.base.VirtualSensorModel):
-    """Utility class for merging unimodal measurement models via crossmodal weighting.
-    """
+    """Utility class for merging unimodal measurement models via crossmodal weighting."""
 
     def __init__(
         self,

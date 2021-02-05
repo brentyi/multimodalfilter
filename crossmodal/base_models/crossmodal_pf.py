@@ -9,8 +9,7 @@ from torchfilter import types
 
 
 class CrossmodalWeightModel(nn.Module, abc.ABC):
-    """Crossmodal weight model.
-    """
+    """Crossmodal weight model."""
 
     def __init__(self, modality_count: int):
         super().__init__()

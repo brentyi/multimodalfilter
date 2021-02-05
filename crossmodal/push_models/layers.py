@@ -18,7 +18,9 @@ def state_layers(units: int) -> nn.Module:
         nn.Module: Encoder block.
     """
     return nn.Sequential(
-        nn.Linear(state_dim, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+        nn.Linear(state_dim, units),
+        nn.ReLU(inplace=True),
+        resblocks.Linear(units),
     )
 
 
@@ -32,7 +34,9 @@ def control_layers(units: int) -> nn.Module:
         nn.Module: Encoder block.
     """
     return nn.Sequential(
-        nn.Linear(control_dim, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+        nn.Linear(control_dim, units),
+        nn.ReLU(inplace=True),
+        resblocks.Linear(units),
     )
 
 
@@ -48,8 +52,14 @@ class _DualSpanningAvgPool(nn.Module):
 
     def __init__(self, rows, cols, reduce_size=1):
         super().__init__()
-        self.pool_h = nn.Sequential(nn.AvgPool2d((rows, reduce_size)), nn.Flatten(),)
-        self.pool_w = nn.Sequential(nn.AvgPool2d((reduce_size, cols)), nn.Flatten(),)
+        self.pool_h = nn.Sequential(
+            nn.AvgPool2d((rows, reduce_size)),
+            nn.Flatten(),
+        )
+        self.pool_w = nn.Sequential(
+            nn.AvgPool2d((reduce_size, cols)),
+            nn.Flatten(),
+        )
 
     def forward(self, x):
         return torch.cat((self.pool_h(x), self.pool_w(x)), dim=-1)
@@ -104,7 +114,9 @@ def observation_pos_layers(units: int) -> nn.Module:
         nn.Module: Encoder block.
     """
     return nn.Sequential(
-        nn.Linear(obs_pos_dim, units), nn.ReLU(inplace=True), resblocks.Linear(units),
+        nn.Linear(obs_pos_dim, units),
+        nn.ReLU(inplace=True),
+        resblocks.Linear(units),
     )
 
 

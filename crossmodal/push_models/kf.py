@@ -15,8 +15,7 @@ class PushKalmanFilter(
     torchfilter.filters.VirtualSensorExtendedKalmanFilter, PushTask.Filter
 ):
     def __init__(self, dynamics_model=None, virtual_sensor_model=None):
-        """Initializes a particle filter for our door task.
-        """
+        """Initializes a particle filter for our door task."""
         if dynamics_model is None and virtual_sensor_model is None:
             super().__init__(
                 dynamics_model=PushDynamicsModel(),
@@ -37,8 +36,7 @@ class PushVirtualSensorModel(torchfilter.base.VirtualSensorModel):
         add_R_noise: float = 1e-6,
         noise_R_tril: torch.Tensor = None,
     ):
-        """Initializes a measurement model for our door task.
-        """
+        """Initializes a measurement model for our door task."""
 
         super().__init__(state_dim=2)
         self.noise_R_tril = noise_R_tril
