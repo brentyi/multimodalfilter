@@ -95,8 +95,8 @@ def train_pf_measurement(*, epochs, batch_size, cov_scale=0.1):
         )
 
 
-def train_kf_measurement(
-    *, epochs, batch_size=32, model=None, optimizer_name="train_measurement"
+def train_virtual_sensor(
+    *, epochs, batch_size=32, model=None, optimizer_name="train_virtual_sensor"
 ):
 
     if model is None:
