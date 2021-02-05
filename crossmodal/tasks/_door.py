@@ -21,8 +21,7 @@ dataset_urls = {
 
 
 class DoorTask(Task):
-    """Dataset definition and model registry for door manipulation task.
-    """
+    """Dataset definition and model registry for door manipulation task."""
 
     @classmethod
     def add_dataset_arguments(cls, parser: argparse.ArgumentParser) -> None:
@@ -307,8 +306,7 @@ def _load_trajectories(
 
 
 def _print_normalization(trajectories):
-    """ Helper for producing code to normalize inputs
-    """
+    """Helper for producing code to normalize inputs"""
     states = []
     observations = fannypack.utils.SliceWrapper({})
     controls = []

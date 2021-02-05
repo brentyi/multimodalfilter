@@ -8,8 +8,7 @@ from .pf import DoorMeasurementModel
 
 class DoorUnimodalParticleFilter(torchfilter.filters.ParticleFilter, DoorTask.Filter):
     def __init__(self):
-        """Initializes a particle filter for our door task.
-        """
+        """Initializes a particle filter for our door task."""
 
         super().__init__(
             dynamics_model=DoorDynamicsModelBrent(),
@@ -25,7 +24,6 @@ class DoorUnimodalParticleFilter(torchfilter.filters.ParticleFilter, DoorTask.Fi
         )
 
     def train(self, mode: bool = True):
-        """Adjust particle count based on train vs eval mode.
-        """
+        """Adjust particle count based on train vs eval mode."""
         self.num_particles = 30 if mode else 300
         super().train(mode)

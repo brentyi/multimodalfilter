@@ -19,8 +19,7 @@ from .kf import DoorKalmanFilter, DoorVirtualSensorModel
 
 class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter, DoorTask.Filter):
     def __init__(self, know_image_blackout=False):
-        """Initializes a particle filter for our door task.
-        """
+        """Initializes a particle filter for our door task."""
 
         super().__init__(
             filter_models=[
@@ -42,7 +41,10 @@ class DoorCrossmodalKalmanFilter(CrossmodalKalmanFilter, DoorTask.Filter):
         self.know_image_blackout = know_image_blackout
 
     def forward(
-        self, *, observations: types.ObservationsTorch, controls: types.ControlsTorch,
+        self,
+        *,
+        observations: types.ObservationsTorch,
+        controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         N, _ = controls.shape
         device = controls.device
@@ -167,8 +169,7 @@ class DoorCrossmodalKalmanFilterWeightModel(CrossmodalKalmanFilterWeightModel):
 
 class DoorMeasurementCrossmodalKalmanFilter(DoorKalmanFilter):
     def __init__(self):
-        """Initializes a particle filter for our door task.
-        """
+        """Initializes a particle filter for our door task."""
 
         super().__init__(
             dynamics_model=DoorDynamicsModel(),

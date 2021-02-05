@@ -126,13 +126,15 @@ class PushWaypointPolicy(AbstractWaypointPolicy):
         if self.push_state == self.PushStates.NEED_RETRACT:
             # print("Retracting")
             waypoint = np.random.uniform(
-                [0.14, -0.3, 1.544], [self.push_x, 0, 1.546 + 0.15],
+                [0.14, -0.3, 1.544],
+                [self.push_x, 0, 1.546 + 0.15],
             )
             self.push_state = self.PushStates.RETRACTED
         elif self.push_state == self.PushStates.RETRACTED:
             # print("Pushing")
             waypoint = np.random.uniform(
-                [self.push_x, -0.3, 1.544], [0.67, 0.19, 1.546 + 0.15],
+                [self.push_x, -0.3, 1.544],
+                [0.67, 0.19, 1.546 + 0.15],
             )
             self.push_x = waypoint[0]
             self.push_state = self.PushStates.NEED_RETRACT
@@ -187,7 +189,9 @@ class PullWaypointPolicy(AbstractWaypointPolicy):
         while True:
             ik_solution = np.array(
                 self.ik_controller.inverse_kinematics(
-                    target_position, orientation, rest_poses=initial_joint_angles,
+                    target_position,
+                    orientation,
+                    rest_poses=initial_joint_angles,
                 )
             )
 
@@ -195,7 +199,10 @@ class PullWaypointPolicy(AbstractWaypointPolicy):
             self.ik_controller.sync_ik_robot(ik_solution)
             position, _ = self.ik_controller.forward_kinematics()
 
-            error = np.linalg.norm(position - target_position, ord=np.inf,)
+            error = np.linalg.norm(
+                position - target_position,
+                ord=np.inf,
+            )
             if error < 1e-4 or iterations > 2000:
                 print(f"IK finished with error {error}, iteration #{iterations}")
                 break

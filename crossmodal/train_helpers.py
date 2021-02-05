@@ -18,8 +18,7 @@ def configure(
     trajectories: List[torchfilter.types.TrajectoryNumpy],
     num_workers: int = 8,
 ):
-    """Configure global settings for training helpers.
-    """
+    """Configure global settings for training helpers."""
     assert isinstance(buddy.model, torchfilter.base.Filter)
     globals()["buddy"] = buddy
     globals()["filter_model"] = cast(torchfilter.base.Filter, buddy.model)

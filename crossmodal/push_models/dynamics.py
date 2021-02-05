@@ -9,8 +9,7 @@ from . import layers
 
 class PushDynamicsModel(torchfilter.base.DynamicsModel):
     def __init__(self, units=64):
-        """Initializes a dynamics model for our door task.
-        """
+        """Initializes a dynamics model for our door task."""
 
         super().__init__(state_dim=2)
 
@@ -33,7 +32,10 @@ class PushDynamicsModel(torchfilter.base.DynamicsModel):
         self.units = units
 
     def forward(
-        self, *, initial_states: types.StatesTorch, controls: types.ControlsTorch,
+        self,
+        *,
+        initial_states: types.StatesTorch,
+        controls: types.ControlsTorch,
     ) -> types.StatesTorch:
         N, state_dim = initial_states.shape[:2]
         assert state_dim == self.state_dim

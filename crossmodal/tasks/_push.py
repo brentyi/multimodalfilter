@@ -26,8 +26,7 @@ dataset_urls = {
 
 
 class PushTask(Task):
-    """Dataset definition and model registry for pushing task.
-    """
+    """Dataset definition and model registry for pushing task."""
 
     @classmethod
     def add_dataset_arguments(cls, parser: argparse.ArgumentParser) -> None:
@@ -275,11 +274,11 @@ def _load_trajectories(
                             6.25842857e-01,
                         ]
                     ],
-                    dtype=np.float32
+                    dtype=np.float32,
                 )
                 observations["gripper_sensors"] /= np.array(
                     [[2.09539968, 2.0681382, 0.00373115, 1.0, 1.0, 1.0, 0.48390451]],
-                    dtype=np.float32
+                    dtype=np.float32,
                 )
                 states -= np.array([[-0.00279736, -0.00027878]], dtype=np.float32)
                 states /= np.array([[0.06409658, 0.06649422]], dtype=np.float32)
@@ -295,7 +294,7 @@ def _load_trajectories(
                             6.25842857e-01,
                         ]
                     ],
-                    dtype=np.float32
+                    dtype=np.float32,
                 )
                 controls /= np.array(
                     [
@@ -309,7 +308,7 @@ def _load_trajectories(
                             0.48390451,
                         ]
                     ],
-                    dtype=np.float32
+                    dtype=np.float32,
                 )
 
             else:
@@ -397,8 +396,7 @@ def _load_trajectories(
 
 
 def _print_normalization(trajectories):
-    """ Helper for producing code to normalize inputs
-    """
+    """Helper for producing code to normalize inputs"""
     states = []
     observations = fannypack.utils.SliceWrapper({})
     controls = []

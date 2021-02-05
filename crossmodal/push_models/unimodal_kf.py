@@ -13,8 +13,7 @@ from .kf import PushKalmanFilter, PushVirtualSensorModel
 
 class PushUnimodalKalmanFilter(UnimodalKalmanFilter, PushTask.Filter):
     def __init__(self):
-        """Initializes a kalman filter for our push task.
-        """
+        """Initializes a kalman filter for our push task."""
 
         super().__init__(
             filter_models=[
@@ -35,8 +34,7 @@ class PushUnimodalKalmanFilter(UnimodalKalmanFilter, PushTask.Filter):
 
 class PushMeasurementUnimodalKalmanFilter(PushKalmanFilter):
     def __init__(self):
-        """Initializes a kalman filter for our push task.
-        """
+        """Initializes a kalman filter for our push task."""
 
         super().__init__(
             dynamics_model=PushDynamicsModel(),

@@ -17,8 +17,7 @@ from .pf import PushMeasurementModel
 
 class PushCrossmodalParticleFilter(torchfilter.filters.ParticleFilter, PushTask.Filter):
     def __init__(self, know_image_blackout: bool = False):
-        """Initializes a particle filter for our door task.
-        """
+        """Initializes a particle filter for our door task."""
 
         super().__init__(
             dynamics_model=PushDynamicsModel(),
@@ -36,8 +35,7 @@ class PushCrossmodalParticleFilter(torchfilter.filters.ParticleFilter, PushTask.
         )
 
     def train(self, mode: bool = True):
-        """Adjust particle count based on train vs eval mode.
-        """
+        """Adjust particle count based on train vs eval mode."""
         self.num_particles = 30 if mode else 300
         super().train(mode)
 

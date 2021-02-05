@@ -15,10 +15,12 @@ dataset_args: Dict
 
 
 def configure(
-    *, buddy: fannypack.utils.Buddy, task: Type[tasks.Task], dataset_args: Dict,
+    *,
+    buddy: fannypack.utils.Buddy,
+    task: Type[tasks.Task],
+    dataset_args: Dict,
 ):
-    """Configure global settings for eval helpers.
-    """
+    """Configure global settings for eval helpers."""
     assert issubclass(task, tasks.Task)
     assert isinstance(buddy.model, torchfilter.base.Filter)
     globals()["buddy"] = buddy
@@ -28,8 +30,7 @@ def configure(
 
 
 def log_eval(measurement_initialize=False) -> None:
-    """Evaluate a filter, print out + log metrics to Tensorboard.
-    """
+    """Evaluate a filter, print out + log metrics to Tensorboard."""
     results = run_eval(measurement_initialize)
     with buddy.log_scope("eval"):
         for key, value in results.items():
@@ -67,8 +68,7 @@ def run_eval_stats(*eval_args, **eval_kwargs) -> Dict[str, float]:
 
 
 def run_eval(measurement_initialize=False, eval_dynamics=False) -> Dict[str, float]:
-    """Evaluate a filter, print out + return metrics.
-    """
+    """Evaluate a filter, print out + return metrics."""
     assert isinstance(filter_model, torchfilter.base.Filter)
 
     # Get eval trajectories
@@ -126,7 +126,8 @@ def run_eval(measurement_initialize=False, eval_dynamics=False) -> Dict[str, flo
                 (N, state_dim, state_dim)
             )
             filter_model.initialize_beliefs(
-                mean=states[0], covariance=cov,
+                mean=states[0],
+                covariance=cov,
             )
 
         # Run filter
