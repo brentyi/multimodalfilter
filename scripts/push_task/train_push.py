@@ -371,9 +371,13 @@ elif isinstance(filter_model, crossmodal.push_models.PushCrossmodalKalmanFilter)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length3")
 
-    buddy.set_regularization_weight(
-        optimizer_name="train_filter_recurrent", value=0.0001
-    )
+    # NOTE: models in paper were reported with regularization, but this method is
+    # currently only available in a private fork of the fannypack library. Should not
+    # significantly impact results.
+
+    # buddy.set_regularization_weight(
+    #     optimizer_name="train_filter_recurrent", value=0.0001
+    # )
 
     for _ in range(3):
         train_helpers.train_e2e(
@@ -473,9 +477,13 @@ elif isinstance(filter_model, crossmodal.push_models.PushUnimodalKalmanFilter):
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length3")
 
-    buddy.set_regularization_weight(
-        optimizer_name="train_filter_recurrent", value=0.0001
-    )
+    # NOTE: models in paper were reported with regularization, but this method is
+    # currently only available in a private fork of the fannypack library. Should not
+    # significantly impact results.
+
+    # buddy.set_regularization_weight(
+    #     optimizer_name="train_filter_recurrent", value=0.0001
+    # )
 
     for _ in range(3):
 

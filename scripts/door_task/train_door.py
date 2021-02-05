@@ -49,14 +49,13 @@ buddy.set_metadata(
 
 # Load trajectories into memory
 train_trajectories = Task.get_train_trajectories(**dataset_args)
-eval_trajectories = Task.get_eval_trajectories(**dataset_args)
 
 # Configure helpers
 train_helpers = crossmodal.train_helpers
 train_helpers.configure(buddy=buddy, trajectories=train_trajectories)
 
 eval_helpers = crossmodal.eval_helpers
-eval_helpers.configure(buddy=buddy, trajectories=eval_trajectories, task=Task)
+eval_helpers.configure(buddy=buddy, task=Task, dataset_args=dataset_args)
 
 # Run model-specific training curriculum
 if isinstance(filter_model, crossmodal.door_models.DoorLSTMFilter):
@@ -348,9 +347,13 @@ elif isinstance(filter_model, crossmodal.door_models.DoorCrossmodalKalmanFilter)
     eval_helpers.log_eval()
     buddy.save_checkpoint("phase4-length3")
 
-    buddy.set_regularization_weight(
-        optimizer_name="train_filter_recurrent", value=0.0001
-    )
+    # NOTE: models in paper were reported with regularization, but this method is
+    # currently only available in a private fork of the fannypack library. Should not
+    # significantly impact results.
+
+    # buddy.set_regularization_weight(
+    #     optimizer_name="train_filter_recurrent", value=0.0001
+    # )
 
     for _ in range(3):
         train_helpers.train_e2e(
