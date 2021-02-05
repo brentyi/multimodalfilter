@@ -223,10 +223,12 @@ def _load_trajectories(
 
             # Normalize data
             observations["gripper_pos"] -= np.array(
-                [[0.37334135, -0.10821614, 1.5769919]], dtype=np.float32
+                [[0.37334135, -0.10821614, 1.5769919]],
+                dtype=np.float32,
             )
             observations["gripper_pos"] /= np.array(
-                [[0.13496609, 0.14862472, 0.04533212]], dtype=np.float32
+                [[0.13496609, 0.14862472, 0.04533212]],
+                dtype=np.float32,
             )
             observations["gripper_sensors"] -= np.array(
                 [
@@ -256,8 +258,14 @@ def _load_trajectories(
                 ],
                 dtype=np.float32,
             )
-            states -= np.array([[0.64900873, -0.00079839, -0.00069189]])
-            states /= np.array([[0.39479038, 0.05650279, 0.0565098]])
+            states -= np.array(
+                [[0.64900873, -0.00079839, -0.00069189]],
+                dtype=np.float32,
+            )
+            states /= np.array(
+                [[0.39479038, 0.05650279, 0.0565098]],
+                dtype=np.float32,
+            )
             controls -= np.array(
                 [
                     [

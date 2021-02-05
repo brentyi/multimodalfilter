@@ -257,10 +257,12 @@ def _load_trajectories(
             # Normalize data
             if kloss_dataset:
                 observations["gripper_pos"] -= np.array(
-                    [[-0.00360131, 0.0, 0.00022349]], dtype=np.float32
+                    [[-0.00360131, 0.0, 0.00022349]],
+                    dtype=np.float32,
                 )
                 observations["gripper_pos"] /= np.array(
-                    [[0.07005621, 1.0, 0.06883541]], dtype=np.float32
+                    [[0.07005621, 1.0, 0.06883541]],
+                    dtype=np.float32,
                 )
                 observations["gripper_sensors"] -= np.array(
                     [
@@ -280,8 +282,14 @@ def _load_trajectories(
                     [[2.09539968, 2.0681382, 0.00373115, 1.0, 1.0, 1.0, 0.48390451]],
                     dtype=np.float32,
                 )
-                states -= np.array([[-0.00279736, -0.00027878]], dtype=np.float32)
-                states /= np.array([[0.06409658, 0.06649422]], dtype=np.float32)
+                states -= np.array(
+                    [[-0.00279736, -0.00027878]],
+                    dtype=np.float32,
+                )
+                states /= np.array(
+                    [[0.06409658, 0.06649422]],
+                    dtype=np.float32,
+                )
                 controls -= np.array(
                     [
                         [
@@ -313,10 +321,12 @@ def _load_trajectories(
 
             else:
                 observations["gripper_pos"] -= np.array(
-                    [[0.46806443, -0.0017836, 0.88028437]], dtype=np.float32
+                    [[0.46806443, -0.0017836, 0.88028437]],
+                    dtype=np.float32,
                 )
                 observations["gripper_pos"] /= np.array(
-                    [[0.02410769, 0.02341035, 0.04018243]], dtype=np.float32
+                    [[0.02410769, 0.02341035, 0.04018243]],
+                    dtype=np.float32,
                 )
                 observations["gripper_sensors"] -= np.array(
                     [
@@ -346,8 +356,14 @@ def _load_trajectories(
                     ],
                     dtype=np.float32,
                 )
-                states -= np.array([[0.4970164, -0.00916641]], dtype=np.float32)
-                states /= np.array([[0.0572766, 0.06118315]], dtype=np.float32)
+                states -= np.array(
+                    [[0.4970164, -0.00916641]],
+                    dtype=np.float32,
+                )
+                states /= np.array(
+                    [[0.0572766, 0.06118315]],
+                    dtype=np.float32,
+                )
                 controls -= np.array(
                     [
                         [
