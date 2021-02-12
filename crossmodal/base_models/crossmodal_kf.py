@@ -177,7 +177,7 @@ class CrossmodalKalmanFilter(torchfilter.base.Filter):
 
         unimodal_covariances = torch.stack(
             [
-                filter_model.state_covariance_estimate
+                filter_model._belief_covariance
                 for i, filter_model in enumerate(self.filter_models)
                 if self._enabled_models[i]
             ]

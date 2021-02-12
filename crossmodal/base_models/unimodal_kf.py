@@ -189,7 +189,7 @@ class UnimodalKalmanFilter(torchfilter.base.Filter):
 
         unimodal_covariances = torch.stack(
             [
-                filter_model.state_covariance_estimate
+                filter_model._belief_covariance
                 for i, filter_model in enumerate(self.filter_models)
                 if self._enabled_models[i]
             ]
@@ -203,7 +203,7 @@ class UnimodalKalmanFilter(torchfilter.base.Filter):
 
             unimodal_precision = torch.stack(
                 [
-                    torch.inverse(filter_model.state_covariance_estimate + 1e-9)
+                    torch.inverse(filter_model._belief_covariance + 1e-9)
                     for i, filter_model in enumerate(self.filter_models)
                     if self._enabled_models[i]
                 ]
