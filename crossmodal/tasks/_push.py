@@ -187,7 +187,7 @@ def _load_trajectories(
             assert observations["gripper_pos"].shape == (timesteps, 3)
 
             if kloss_dataset:
-                observations["gripper_sensors"] = np.zeros((timesteps, 7))
+                observations["gripper_sensors"] = np.zeros((timesteps, 7), dtype=np.float32)
                 observations["gripper_sensors"][:, :3] = raw_trajectory["force"]
                 observations["gripper_sensors"][:, 6] = raw_trajectory["contact"]
             else:
@@ -242,7 +242,12 @@ def _load_trajectories(
                 eef_positions = raw_trajectory["eef_pos"]
             eef_positions_shifted = np.roll(eef_positions, shift=1, axis=0)
             eef_positions_shifted[0] = eef_positions[0]
-            controls = np.concatenate(
+
+            # Force controls to be of type float32
+            # NOTE: In numpy 1.20+, this can be done
+            # through dtype kwarg to concatenate
+            controls = np.empty((timesteps, 7), dtype=np.float32)
+            np.concatenate(
                 [
                     eef_positions_shifted,
                     eef_positions - eef_positions_shifted,
@@ -251,8 +256,8 @@ def _load_trajectories(
                     ],  # "contact" key same for both kloss and normal dataset
                 ],
                 axis=1,
+                out=controls
             )
-            assert controls.shape == (timesteps, 7)
 
             # Normalize data
             if kloss_dataset:
