@@ -139,7 +139,7 @@ def _load_trajectories(
             # We want:
             # (door theta, hinge x, hinge y)
             state_dim = 3
-            states = np.full((timesteps, state_dim), np.nan)
+            states = np.full((timesteps, state_dim), np.nan, dtype=np.float32)
 
             states[:, 0] = raw_trajectory["object-state"][:, 1]  # theta
             states[:, 1] = raw_trajectory["object-state"][:, 3]  # theta
