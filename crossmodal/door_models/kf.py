@@ -38,7 +38,8 @@ class DoorVirtualSensorModel(torchfilter.base.VirtualSensorModel):
     ):
         """Initializes a measurement model for our door task."""
 
-        super().__init__(state_dim=3, noise_R_tril=noise_R_tril)
+        super().__init__(state_dim=3)
+        self.noise_R_tril = noise_R_tril
 
         valid_modalities = {"image", "pos", "sensors"}
         assert len(valid_modalities | modalities) == 3, "Receivedi invalid modality"
